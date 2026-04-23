@@ -30,7 +30,6 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }) {
         className={`relative w-full ${sizeClasses[size] || sizeClasses.md} bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-modal`}
         style={{ animation: 'modalIn 0.2s ease-out' }}
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <h3 className="text-slate-800" style={{ fontSize: '1.05rem', fontWeight: 600 }}>
             {title}
@@ -42,7 +41,6 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }) {
             <X size={16} />
           </button>
         </div>
-        {/* Body */}
         <div className="px-6 py-5 max-h-[75vh] overflow-y-auto">
           {children}
         </div>
