@@ -31,13 +31,14 @@ export function NotificationPanel() {
 
         if (masuk.status === 'fulfilled') {
           masuk.value.slice(0, 5).forEach((m) => {
+           console.log(m); 
             items.push({
               id: `masuk-${m.id}`,
               icon: Package,
               color: 'text-emerald-600',
               bg: 'bg-emerald-50',
               title: 'Barang Masuk',
-              desc: `${m.nama_barang || m.barang_nama || 'Barang'} — ${m.jumlah} unit`,
+              desc: `${m.nama_barang || m.barang_nama || 'Barang'} — ${m.qty} unit`,
               time: m.tanggal || m.created_at || null,
             });
           });
@@ -51,7 +52,7 @@ export function NotificationPanel() {
               color: 'text-blue-600',
               bg: 'bg-blue-50',
               title: 'Penjualan',
-              desc: `${p.nama_barang || p.barang_nama || 'Barang'} — ${p.jumlah} unit`,
+              desc: `${p.nama_barang || p.barang_nama || 'Barang'} — ${p.qty} unit`,
               time: p.tanggal || p.created_at || null,
             });
           });
