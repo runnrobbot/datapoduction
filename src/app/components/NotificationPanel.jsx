@@ -31,7 +31,6 @@ export function NotificationPanel() {
 
         if (masuk.status === 'fulfilled') {
           masuk.value.slice(0, 5).forEach((m) => {
-           console.log(m); 
             items.push({
               id: `masuk-${m.id}`,
               icon: Package,
