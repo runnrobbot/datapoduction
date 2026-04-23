@@ -63,7 +63,6 @@ export default function Login() {
                 className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-all"
               />
             </div>
-
             <div>
               <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
                 Password
@@ -84,7 +83,6 @@ export default function Login() {
                 </button>
               </div>
             </div>
-
             <button
               id="login-submit"
               type="submit"

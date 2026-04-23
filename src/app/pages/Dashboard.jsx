@@ -62,7 +62,6 @@ export default function Dashboard() {
     loadAll();
   }, []);
 
-  // Computed stats
   const stats = useMemo(() => {
     const totalTerjual = penjualanList.reduce((s, p) => s + (parseInt(p.qty) || 0), 0);
     const totalRevenue = penjualanList.reduce((s, p) => s + ((parseInt(p.qty) || 0) * (parseFloat(p.harga) || 0)), 0);
@@ -74,7 +73,6 @@ export default function Dashboard() {
     return { totalTerjual, totalRevenue, totalStok, activePreOrder };
   }, [barangList, penjualanList, preOrderList]);
 
-  // Top products for bar chart
   const topProducts = useMemo(() => {
     const map = {};
     penjualanList.forEach(p => {
@@ -87,7 +85,6 @@ export default function Dashboard() {
       .slice(0, 8);
   }, [penjualanList]);
 
-  // Offline vs Online
   const channelData = useMemo(() => {
     const offline = penjualanList.filter(p => p.tipe === 'offline').reduce((s, p) => s + (parseInt(p.qty) || 0), 0);
     const online = penjualanList.filter(p => p.tipe === 'online').reduce((s, p) => s + (parseInt(p.qty) || 0), 0);
@@ -97,13 +94,8 @@ export default function Dashboard() {
     ];
   }, [penjualanList]);
 
-  // Recent transactions (last 10 penjualan)
   const recentSales = penjualanList.slice(0, 10);
-
-  // Low stock barang (stok <= 5)
   const lowStok = barangList.filter(b => b.stok <= 5 && b.stok >= 0).slice(0, 5);
-
-  // Urgent pre-orders
   const urgentPO = preOrderList
     .map(po => ({ ...po, status: getPOStatus(po.tanggal_po) }))
     .filter(po => po.status.color === 'red' || po.status.color === 'yellow')
@@ -111,7 +103,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Total Terjual"
@@ -143,9 +134,7 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Bar Chart - Top Products */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
           <div className="flex items-center justify-between mb-5">
             <div>
@@ -172,7 +161,6 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Pie Chart - Channel */}
         <div className="bg-white rounded-xl border border-slate-200 p-5">
           <div className="mb-5">
             <h3 className="text-slate-800 font-semibold" style={{ fontSize: '0.95rem' }}>Saluran Penjualan</h3>
@@ -206,9 +194,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Recent Sales */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-slate-800 font-semibold" style={{ fontSize: '0.95rem' }}>Transaksi Terbaru</h3>
@@ -261,9 +247,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Alerts Column */}
         <div className="space-y-4">
-          {/* Low Stock */}
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-slate-800 font-semibold" style={{ fontSize: '0.9rem' }}>Stok Menipis</h3>
@@ -292,7 +276,6 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Urgent PO */}
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-slate-800 font-semibold" style={{ fontSize: '0.9rem' }}>PO Mendesak</h3>

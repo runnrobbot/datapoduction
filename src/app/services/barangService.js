@@ -1,17 +1,3 @@
-/**
- * barangService.js
- * 
- * Production  → Firebase Firestore
- * Development → PHP/MySQL REST API (XAMPP)
- * 
- * Endpoint MySQL yang dibutuhkan (buat di PHP):
- *   GET    /barang          → semua barang, diurutkan nama asc
- *   GET    /barang/:id      → detail satu barang
- *   POST   /barang          → tambah barang baru
- *   PUT    /barang/:id      → update barang
- *   DELETE /barang/:id      → hapus barang
- */
-
 import { USE_FIREBASE, apiFetch } from './db.js';
 import { db } from './firebase.js';
 import {

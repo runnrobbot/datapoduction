@@ -1,15 +1,6 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
-/**
- * Firebase hanya diinisialisasi jika:
- * - VITE_USE_FIREBASE=true (production), DAN
- * - Semua kredensial sudah diisi di .env.production
- *
- * Saat dev (XAMPP), firebase.js diimport tapi tidak aktif —
- * semua service akan masuk ke branch USE_FIREBASE=false.
- */
-
 const USE_FIREBASE = import.meta.env.VITE_USE_FIREBASE === 'true';
 
 const firebaseConfig = {

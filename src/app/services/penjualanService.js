@@ -1,16 +1,3 @@
-/**
- * penjualanService.js
- * 
- * Production  → Firebase Firestore (dengan transaction untuk update stok)
- * Development → PHP/MySQL REST API (XAMPP)
- * 
- * Endpoint MySQL yang dibutuhkan (buat di PHP):
- *   GET    /penjualan           → semua data penjualan, desc created_at
- *   POST   /penjualan           → tambah + kurangi stok (cek stok dulu)
- *   DELETE /penjualan/:id       → hapus + kembalikan stok
- *   POST   /penjualan/import    → batch import historis (tanpa update stok)
- */
-
 import { USE_FIREBASE, apiFetch } from './db.js';
 import { db } from './firebase.js';
 import {
@@ -94,9 +81,6 @@ export async function deletePenjualan(id) {
   });
 }
 
-/**
- * Batch import historis — TIDAK mengupdate stok (data lama)
- */
 export async function batchImportPenjualan(items) {
   if (!USE_FIREBASE) {
     return await apiFetch('/penjualan/import', {

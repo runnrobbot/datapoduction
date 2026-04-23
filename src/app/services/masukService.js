@@ -1,16 +1,3 @@
-/**
- * masukService.js
- * 
- * Production  → Firebase Firestore (dengan transaction untuk update stok)
- * Development → PHP/MySQL REST API (XAMPP)
- * 
- * Endpoint MySQL yang dibutuhkan (buat di PHP):
- *   GET    /barang-masuk          → semua data masuk, desc created_at
- *   POST   /barang-masuk          → tambah + update stok barang (dalam satu transaksi MySQL)
- *   PUT    /barang-masuk/:id      → update qty + adjust stok barang
- *   DELETE /barang-masuk/:id      → hapus + kurangi stok barang
- */
-
 import { USE_FIREBASE, apiFetch } from './db.js';
 import { db } from './firebase.js';
 import {

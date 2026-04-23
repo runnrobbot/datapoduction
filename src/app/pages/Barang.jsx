@@ -24,20 +24,17 @@ export default function Barang() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
-  // Modal states
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);
   const [saving, setSaving] = useState(false);
 
-  // Import modal
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importData, setImportData] = useState([]);
   const [importLoading, setImportLoading] = useState(false);
   const [columnMap, setColumnMap] = useState({ nama: '', kode: '', satuan: '', harga_jual: '' });
   const [importColumns, setImportColumns] = useState([]);
 
-  // Delete confirm
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   async function loadData() {
@@ -65,7 +62,6 @@ export default function Barang() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // Form handlers
   function openAdd() {
     setForm(INITIAL_FORM);
     setEditTarget(null);
@@ -111,7 +107,6 @@ export default function Barang() {
     }
   }
 
-  // Import
   async function handleFileChange(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -192,7 +187,6 @@ export default function Barang() {
 
   return (
     <div className="space-y-5">
-      {/* Header Card */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex-1">
@@ -214,13 +208,11 @@ export default function Barang() {
             >
               <RefreshCw size={14} /> Refresh
             </button>
-            {/* Import trigger */}
             <label className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer">
               <Upload size={14} />
               Import
               <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFileChange} className="hidden" />
             </label>
-            {/* Export dropdown */}
             <div className="relative group">
               <button className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
                 <Download size={14} /> Export
@@ -244,7 +236,6 @@ export default function Barang() {
         </p>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -324,7 +315,6 @@ export default function Barang() {
           </table>
         </div>
 
-        {/* Pagination */}
         {!loading && totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 bg-slate-50">
             <p className="text-xs text-slate-500">
@@ -367,7 +357,6 @@ export default function Barang() {
         )}
       </div>
 
-      {/* Add/Edit Modal */}
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -439,7 +428,6 @@ export default function Barang() {
         </form>
       </Modal>
 
-      {/* Import Mapping Modal */}
       <Modal
         isOpen={importModalOpen}
         onClose={() => setImportModalOpen(false)}
@@ -476,7 +464,6 @@ export default function Barang() {
               </div>
             ))}
           </div>
-          {/* Preview */}
           {importData.length > 0 && columnMap.nama && (
             <div>
               <p className="text-xs text-slate-500 mb-2">Preview (5 baris pertama):</p>
@@ -520,8 +507,7 @@ export default function Barang() {
           </div>
         </div>
       </Modal>
-
-      {/* Delete Confirm */}
+      
       <ConfirmDialog
         isOpen={!!deleteTarget}
         onConfirm={handleDelete}

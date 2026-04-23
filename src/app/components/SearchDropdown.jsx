@@ -7,7 +7,6 @@ export function SearchDropdown({ barangList, value, onChange, placeholder = 'Car
   const [selected, setSelected] = useState(null);
   const containerRef = useRef(null);
 
-  // Sync selected label when value changes externally
   useEffect(() => {
     if (!value) {
       setSelected(null);
@@ -15,7 +14,6 @@ export function SearchDropdown({ barangList, value, onChange, placeholder = 'Car
     }
   }, [value]);
 
-  // Close on outside click
   useEffect(() => {
     function handleClickOutside(e) {
       if (containerRef.current && !containerRef.current.contains(e.target)) {

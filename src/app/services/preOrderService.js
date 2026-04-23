@@ -1,16 +1,3 @@
-/**
- * preOrderService.js
- * 
- * Production  → Firebase Firestore
- * Development → PHP/MySQL REST API (XAMPP)
- * 
- * Endpoint MySQL yang dibutuhkan (buat di PHP):
- *   GET    /pre-order          → semua PO, asc tanggal_po
- *   POST   /pre-order          → tambah PO baru
- *   PUT    /pre-order/:id      → update PO
- *   DELETE /pre-order/:id      → hapus PO
- */
-
 import { USE_FIREBASE, apiFetch } from './db.js';
 import { db } from './firebase.js';
 import {
