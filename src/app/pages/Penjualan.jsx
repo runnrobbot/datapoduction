@@ -512,7 +512,7 @@ export default function Penjualan() {
       <Modal isOpen={importModalOpen} onClose={() => setImportModalOpen(false)} title="Import Data Penjualan" size="lg">
         <div className="space-y-4">
           <div className="bg-amber-50 border border-amber-100 rounded-lg px-4 py-3 text-sm text-amber-700">
-            ⚠️ Import massal tidak memperbarui stok secara otomatis. Cocok untuk data historis.
+             Import massal tidak memperbarui stok secara otomatis. Cocok untuk data historis.
             <br />
             <span className="text-xs">{importData.length} baris ditemukan</span>
           </div>

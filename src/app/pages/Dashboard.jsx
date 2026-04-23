@@ -266,7 +266,7 @@ export default function Dashboard() {
           {/* Low Stock */}
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-slate-800 font-semibold" style={{ fontSize: '0.9rem' }}>⚠️ Stok Menipis</h3>
+              <h3 className="text-slate-800 font-semibold" style={{ fontSize: '0.9rem' }}>Stok Menipis</h3>
               <Link to="/barang" className="text-xs text-emerald-600 hover:underline">Lihat</Link>
             </div>
             {loading ? (
@@ -295,7 +295,7 @@ export default function Dashboard() {
           {/* Urgent PO */}
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-slate-800 font-semibold" style={{ fontSize: '0.9rem' }}>🔔 PO Mendesak</h3>
+              <h3 className="text-slate-800 font-semibold" style={{ fontSize: '0.9rem' }}>PO Mendesak</h3>
               <Link to="/pre-order" className="text-xs text-emerald-600 hover:underline">Lihat</Link>
             </div>
             {loading ? (
