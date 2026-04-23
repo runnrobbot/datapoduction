@@ -57,7 +57,6 @@ export function NotificationPanel() {
           });
         }
 
-        // Sort by time desc
         items.sort((a, b) => new Date(b.time) - new Date(a.time));
         const latest = items.slice(0, 8);
         setNotifications(latest);
@@ -69,7 +68,6 @@ export function NotificationPanel() {
     load();
   }, []);
 
-  // Tutup panel kalau klik di luar
   useEffect(() => {
     function handleClick(e) {
       if (ref.current && !ref.current.contains(e.target)) {
@@ -87,7 +85,6 @@ export function NotificationPanel() {
 
   return (
     <div className="relative" ref={ref}>
-      {/* Bell Button */}
       <button
         onClick={handleOpen}
         className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 transition-colors relative"
@@ -102,10 +99,8 @@ export function NotificationPanel() {
         )}
       </button>
 
-      {/* Dropdown Panel */}
       {open && (
         <div className="absolute right-0 top-10 w-80 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
-          {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <TrendingUp size={15} className="text-emerald-600" />
@@ -121,7 +116,6 @@ export function NotificationPanel() {
             </button>
           </div>
 
-          {/* List */}
           <div className="max-h-72 overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-slate-400">
@@ -159,7 +153,6 @@ export function NotificationPanel() {
             )}
           </div>
 
-          {/* Footer */}
           {notifications.length > 0 && (
             <div className="px-4 py-2 border-t border-slate-100 bg-slate-50">
               <p className="text-center text-slate-400" style={{ fontSize: '0.7rem' }}>
