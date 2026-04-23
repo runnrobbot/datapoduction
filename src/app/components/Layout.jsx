@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router';
-import { Menu } from 'lucide-react';
-import { Toaster } from 'sonner';
+import { Menu, LogOut, User } from 'lucide-react';
+import { Toaster, toast } from 'sonner';
 import { Sidebar } from './Sidebar';
 import { NotificationPanel } from './NotificationPanel';
+import { useAuth } from '../context/AuthContext';
 
 const PAGE_TITLES = {
   '/': 'Dashboard',
@@ -11,12 +12,19 @@ const PAGE_TITLES = {
   '/masuk': 'Barang Masuk',
   '/penjualan': 'Penjualan',
   '/pre-order': 'Pre Order',
+  '/manage-user': 'Manajemen User',
 };
 
 export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, logout } = useAuth();
   const location = useLocation();
   const pageTitle = PAGE_TITLES[location.pathname] || 'Data Production';
+
+  const handleLogout = () => {
+    logout();
+    toast.success('Berhasil keluar');
+  };
 
   return (
     <div className="min-h-screen bg-slate-50" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
@@ -42,10 +50,28 @@ export function Layout() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <NotificationPanel />
-            <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center">
-              <span className="text-white text-xs font-bold">DP</span>
+            
+            <div className="h-8 w-px bg-slate-100 mx-1 hidden sm:block"></div>
+
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex flex-col items-end">
+                <span className="text-xs font-bold text-slate-700 leading-tight">{user?.nama}</span>
+                <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider leading-tight">
+                  {user?.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+                </span>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white shadow-sm shadow-emerald-200">
+                <User size={14} />
+              </div>
+              <button 
+                onClick={handleLogout}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all ml-1"
+                title="Keluar"
+              >
+                <LogOut size={16} />
+              </button>
             </div>
           </div>
         </header>

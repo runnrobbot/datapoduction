@@ -1,8 +1,9 @@
 import { NavLink } from 'react-router';
 import {
   LayoutDashboard, Package, PackagePlus, ShoppingCart,
-  ClipboardList, X, Layers
+  ClipboardList, X, Layers, Users
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -10,9 +11,14 @@ const NAV_ITEMS = [
   { to: '/masuk', icon: PackagePlus, label: 'Barang Masuk' },
   { to: '/penjualan', icon: ShoppingCart, label: 'Penjualan' },
   { to: '/pre-order', icon: ClipboardList, label: 'Pre Order' },
+  { to: '/manage-user', icon: Users, label: 'Manage User', superOnly: true },
 ];
 
 export function Sidebar({ isOpen, onClose }) {
+  const { user } = useAuth();
+
+  const filteredItems = NAV_ITEMS.filter(item => !item.superOnly || user?.role === 'super_admin');
+
   return (
     <>
       {/* Mobile overlay */}
@@ -54,7 +60,7 @@ export function Sidebar({ isOpen, onClose }) {
         <nav className="flex-1 px-3 py-4 overflow-y-auto">
           <p className="px-2 mb-2 text-xs text-slate-400 uppercase tracking-wider">Menu Utama</p>
           <ul className="space-y-0.5">
-            {NAV_ITEMS.map(item => (
+            {filteredItems.map(item => (
               <li key={item.to}>
                 <NavLink
                   to={item.to}

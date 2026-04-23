@@ -23,6 +23,8 @@ export default function Penjualan() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterTipe, setFilterTipe] = useState('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(1);
 
   // Add modal
@@ -78,9 +80,27 @@ export default function Penjualan() {
         p.nama_barang?.toLowerCase().includes(q) ||
         p.kode_barang?.toLowerCase().includes(q);
       const matchTipe = filterTipe === 'all' || p.tipe === filterTipe;
-      return matchSearch && matchTipe;
+      
+      let matchDate = true;
+      if (startDate || endDate) {
+        // toDate is from helpers, but we might not have imported it correctly if it's not used here, wait, formatDate uses it.
+        // Let's manually parse it safely.
+        const itemDate = new Date(p.created_at?.toDate ? p.created_at.toDate() : p.created_at);
+        if (startDate) {
+          const start = new Date(startDate);
+          start.setHours(0, 0, 0, 0);
+          matchDate = matchDate && itemDate >= start;
+        }
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          matchDate = matchDate && itemDate <= end;
+        }
+      }
+
+      return matchSearch && matchTipe && matchDate;
     });
-  }, [list, search, filterTipe]);
+  }, [list, search, filterTipe, startDate, endDate]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -276,6 +296,11 @@ export default function Penjualan() {
               <option value="offline">Offline</option>
               <option value="online">Reseller</option>
             </select>
+            <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2">
+              <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setPage(1); }} className="py-1.5 text-sm text-slate-600 bg-transparent focus:outline-none" />
+              <span className="text-slate-400 text-xs">sd</span>
+              <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setPage(1); }} className="py-1.5 text-sm text-slate-600 bg-transparent focus:outline-none" />
+            </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <button onClick={loadAll} className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">

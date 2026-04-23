@@ -20,6 +20,8 @@ export default function BarangMasuk() {
   const [barangList, setBarangList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(1);
 
   // Modal
@@ -50,12 +52,29 @@ export default function BarangMasuk() {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return list.filter(m =>
-      m.nama_barang?.toLowerCase().includes(q) ||
-      m.kode_barang?.toLowerCase().includes(q) ||
-      m.keterangan?.toLowerCase().includes(q)
-    );
-  }, [list, search]);
+    return list.filter(m => {
+      const matchSearch = m.nama_barang?.toLowerCase().includes(q) ||
+        m.kode_barang?.toLowerCase().includes(q) ||
+        m.keterangan?.toLowerCase().includes(q);
+      
+      let matchDate = true;
+      if (startDate || endDate) {
+        const itemDate = new Date(m.created_at?.toDate ? m.created_at.toDate() : m.created_at);
+        if (startDate) {
+          const start = new Date(startDate);
+          start.setHours(0, 0, 0, 0);
+          matchDate = matchDate && itemDate >= start;
+        }
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          matchDate = matchDate && itemDate <= end;
+        }
+      }
+
+      return matchSearch && matchDate;
+    });
+  }, [list, search, startDate, endDate]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -124,8 +143,8 @@ export default function BarangMasuk() {
       {/* Header */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <div className="flex-1">
-            <div className="relative">
+          <div className="flex-1 flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
@@ -135,10 +154,15 @@ export default function BarangMasuk() {
                 className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
               />
             </div>
+            <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2 w-full sm:w-auto">
+              <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setPage(1); }} className="py-1.5 text-sm text-slate-600 bg-transparent focus:outline-none flex-1" />
+              <span className="text-slate-400 text-xs">sd</span>
+              <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setPage(1); }} className="py-1.5 text-sm text-slate-600 bg-transparent focus:outline-none flex-1" />
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={loadAll} className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">
-              <RefreshCw size={14} /> Refresh
+              <RefreshCw size={14} /> <span className="hidden sm:inline">Refresh</span>
             </button>
             <button
               onClick={openAdd}

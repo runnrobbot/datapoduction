@@ -19,7 +19,13 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '/inventory-api'),
+        rewrite: (path) => {
+          // Always add trailing slash so Apache never issues a mod_dir redirect
+          // index.php strips it with rtrim(), so this is safe for all endpoints
+          let p = path.replace(/^\/api/, '/inventory_api');
+          if (!p.endsWith('/')) p += '/';
+          return p;
+        },
       },
     },
   },
