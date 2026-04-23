@@ -84,7 +84,6 @@ export default function ManageUser() {
     }
   }
 
-  // Guard: only super_admin can access
   if (currentUser?.role !== 'super_admin') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center gap-4">
@@ -101,7 +100,6 @@ export default function ManageUser() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="flex-1">
           <h2 className="text-sm font-semibold text-slate-700">Manajemen User</h2>
@@ -119,7 +117,6 @@ export default function ManageUser() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -182,7 +179,6 @@ export default function ManageUser() {
         </div>
       </div>
 
-      {/* Add / Edit Modal */}
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}
         title={editTarget ? 'Edit User' : 'Tambah User Baru'}>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -239,7 +235,6 @@ export default function ManageUser() {
         </form>
       </Modal>
 
-      {/* Delete Confirm */}
       <ConfirmDialog
         isOpen={!!deleteTarget}
         onConfirm={handleDelete}

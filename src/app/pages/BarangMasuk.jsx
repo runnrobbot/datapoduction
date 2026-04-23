@@ -24,7 +24,6 @@ export default function BarangMasuk() {
   const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(1);
 
-  // Modal
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [selectedBarang, setSelectedBarang] = useState(null);
@@ -32,7 +31,6 @@ export default function BarangMasuk() {
   const [keterangan, setKeterangan] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Delete
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   async function loadAll() {
@@ -89,7 +87,6 @@ export default function BarangMasuk() {
 
   function openEdit(item) {
     setEditTarget(item);
-    // Find barang in list
     const barang = barangList.find(b => b.id === item.barang_id);
     setSelectedBarang(barang || { id: item.barang_id, kode: item.kode_barang, nama: item.nama_barang, satuan: item.satuan, stok: 0 });
     setQty(item.qty.toString());
@@ -140,7 +137,6 @@ export default function BarangMasuk() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex-1 flex flex-col sm:flex-row gap-2">
@@ -177,7 +173,6 @@ export default function BarangMasuk() {
         </p>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -248,7 +243,6 @@ export default function BarangMasuk() {
           </table>
         </div>
 
-        {/* Pagination */}
         {!loading && totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 bg-slate-50">
             <p className="text-xs text-slate-500">Halaman {page} dari {totalPages}</p>
@@ -266,7 +260,6 @@ export default function BarangMasuk() {
         )}
       </div>
 
-      {/* Add/Edit Modal */}
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -341,7 +334,6 @@ export default function BarangMasuk() {
         </form>
       </Modal>
 
-      {/* Delete Confirm */}
       <ConfirmDialog
         isOpen={!!deleteTarget}
         onConfirm={handleDelete}

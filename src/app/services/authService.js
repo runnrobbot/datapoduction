@@ -1,17 +1,6 @@
-/**
- * authService.js
- *
- * Simple localStorage-based auth for dev mode.
- * Users stored in: localStorage key 'dp_users' (super_admin seeded on first load)
- * Session stored in: localStorage key 'dp_session'
- *
- * Roles: 'super_admin' | 'admin'
- */
-
 const USERS_KEY  = 'dp_users';
 const SESSION_KEY = 'dp_session';
 
-// ─── Seed default super admin if no users exist ───────────────────────────
 function seedUsers() {
   if (!localStorage.getItem(USERS_KEY)) {
     const defaults = [
@@ -37,7 +26,6 @@ function saveUsers(users) {
   localStorage.setItem(USERS_KEY, JSON.stringify(users));
 }
 
-// ─── Auth ──────────────────────────────────────────────────────────────────
 export function login(username, password) {
   const users = getUsers();
   const user = users.find(
@@ -64,7 +52,6 @@ export function isSuperAdmin() {
   return u?.role === 'super_admin';
 }
 
-// ─── User Management (super admin only) ───────────────────────────────────
 export function getAllUsers() {
   return getUsers().map(u => {
     const { password, ...safe } = u;
@@ -94,13 +81,11 @@ export function updateUser(id, data) {
   const idx = users.findIndex(u => u.id === id);
   if (idx === -1) throw new Error('User tidak ditemukan');
 
-  // Prevent changing own role
   const session = getCurrentUser();
   if (session?.id === id && data.role && data.role !== users[idx].role) {
     throw new Error('Tidak bisa mengubah role sendiri');
   }
 
-  // Username duplicate check (exclude self)
   if (data.username && users.some(u => u.username === data.username && u.id !== id)) {
     throw new Error('Username sudah dipakai');
   }
@@ -114,7 +99,6 @@ export function updateUser(id, data) {
   };
   saveUsers(users);
 
-  // Refresh session if editing self
   if (session?.id === id) {
     const { password, ...safe } = users[idx];
     localStorage.setItem(SESSION_KEY, JSON.stringify(safe));

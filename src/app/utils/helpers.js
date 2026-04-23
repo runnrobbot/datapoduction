@@ -75,9 +75,7 @@ export function getPOStatus(tanggalPO) {
   };
 }
 
-/**
- * Truncate text to N characters
- */
+
 export function truncate(str, n = 30) {
   if (!str) return '-';
   return str.length > n ? str.slice(0, n) + '…' : str;

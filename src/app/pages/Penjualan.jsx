@@ -27,7 +27,6 @@ export default function Penjualan() {
   const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(1);
 
-  // Add modal
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedBarang, setSelectedBarang] = useState(null);
   const [qty, setQty] = useState('');
@@ -36,7 +35,6 @@ export default function Penjualan() {
   const [keterangan, setKeterangan] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Import
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importData, setImportData] = useState([]);
   const [importColumns, setImportColumns] = useState([]);
@@ -45,10 +43,8 @@ export default function Penjualan() {
   });
   const importRef = useRef(null);
 
-  // Delete
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  // Export dropdown
   const [showExport, setShowExport] = useState(false);
 
   async function loadAll() {
@@ -66,7 +62,6 @@ export default function Penjualan() {
 
   useEffect(() => { loadAll(); }, []);
 
-  // When barang is selected, auto-fill harga
   useEffect(() => {
     if (selectedBarang) {
       setHarga(selectedBarang.harga_jual?.toString() || '');
@@ -83,8 +78,6 @@ export default function Penjualan() {
       
       let matchDate = true;
       if (startDate || endDate) {
-        // toDate is from helpers, but we might not have imported it correctly if it's not used here, wait, formatDate uses it.
-        // Let's manually parse it safely.
         const itemDate = new Date(p.created_at?.toDate ? p.created_at.toDate() : p.created_at);
         if (startDate) {
           const start = new Date(startDate);
@@ -105,7 +98,6 @@ export default function Penjualan() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // Summary stats for filtered data
   const summary = useMemo(() => {
     const totalQty = filtered.reduce((s, p) => s + (parseInt(p.qty) || 0), 0);
     const totalRevenue = filtered.reduce((s, p) => s + ((parseInt(p.qty) || 0) * (parseFloat(p.harga) || 0)), 0);
@@ -160,7 +152,6 @@ export default function Penjualan() {
     }
   }
 
-  // Import
   async function handleFileChange(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -170,7 +161,6 @@ export default function Penjualan() {
       const cols = Object.keys(data[0]);
       setImportColumns(cols);
       setImportData(data);
-      // Auto-map
       const map = { kode_barang: '', nama_barang: '', qty: '', tipe: '', harga: '', keterangan: '', tanggal: '' };
       cols.forEach(c => {
         const cl = c.toLowerCase();
@@ -256,7 +246,6 @@ export default function Penjualan() {
 
   return (
     <div className="space-y-5">
-      {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-4">
           <p className="text-xs text-slate-500 uppercase tracking-wider">Total Unit Terjual</p>
@@ -273,7 +262,6 @@ export default function Penjualan() {
         </div>
       </div>
 
-      {/* Header Toolbar */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex-1 flex gap-2">
@@ -310,7 +298,6 @@ export default function Penjualan() {
               <Upload size={14} /> Import
               <input ref={importRef} type="file" accept=".csv,.xlsx,.xls" onChange={handleFileChange} className="hidden" />
             </label>
-            {/* Export */}
             <div className="relative">
               <button
                 onClick={() => setShowExport(!showExport)}
@@ -335,7 +322,6 @@ export default function Penjualan() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -406,7 +392,6 @@ export default function Penjualan() {
           </table>
         </div>
 
-        {/* Pagination */}
         {!loading && totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 bg-slate-50">
             <p className="text-xs text-slate-500">Halaman {page} dari {totalPages} ({filtered.length} transaksi)</p>
@@ -424,7 +409,6 @@ export default function Penjualan() {
         )}
       </div>
 
-      {/* Add Penjualan Modal */}
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Catat Penjualan">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -525,7 +509,6 @@ export default function Penjualan() {
         </form>
       </Modal>
 
-      {/* Import Modal */}
       <Modal isOpen={importModalOpen} onClose={() => setImportModalOpen(false)} title="Import Data Penjualan" size="lg">
         <div className="space-y-4">
           <div className="bg-amber-50 border border-amber-100 rounded-lg px-4 py-3 text-sm text-amber-700">
@@ -555,7 +538,6 @@ export default function Penjualan() {
               </div>
             ))}
           </div>
-          {/* Preview */}
           {importData.length > 0 && (
             <div className="overflow-x-auto border border-slate-200 rounded-lg">
               <table className="w-full text-xs">
@@ -593,7 +575,6 @@ export default function Penjualan() {
         </div>
       </Modal>
 
-      {/* Void Confirm */}
       <ConfirmDialog
         isOpen={!!deleteTarget}
         onConfirm={handleDelete}

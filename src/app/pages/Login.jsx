@@ -27,10 +27,8 @@ export default function Login() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 flex items-center justify-center p-4"
       style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
 
-      {/* Card */}
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden">
 
-        {/* Header */}
         <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 px-8 pt-10 pb-8 text-center">
           <div className="inline-flex w-14 h-14 bg-white/20 rounded-2xl items-center justify-center mb-4 backdrop-blur-sm">
             <Layers size={28} className="text-white" />
@@ -39,7 +37,6 @@ export default function Login() {
           <p className="text-emerald-100 text-sm mt-1">Data Production Management System</p>
         </div>
 
-        {/* Form */}
         <div className="px-8 py-8">
           <p className="text-slate-600 text-sm mb-6 text-center">Masuk ke akun Anda</p>
 

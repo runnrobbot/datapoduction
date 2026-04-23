@@ -40,22 +40,14 @@ export default function PreOrder() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-
-  // Master barang for dropdown
   const [barangList, setBarangList] = useState([]);
-
-  // Modal
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);
   const [saving, setSaving] = useState(false);
-
-  // Barang combobox
   const [barangQuery, setBarangQuery] = useState('');
   const [barangOpen, setBarangOpen] = useState(false);
   const comboRef = useRef(null);
-
-  // Delete
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   async function loadData() {
@@ -72,8 +64,6 @@ export default function PreOrder() {
   }
 
   useEffect(() => { loadData(); }, []);
-
-  // Close combobox on outside click
   useEffect(() => {
     function handleOutside(e) {
       if (comboRef.current && !comboRef.current.contains(e.target)) {
@@ -84,7 +74,6 @@ export default function PreOrder() {
     return () => document.removeEventListener('mousedown', handleOutside);
   }, []);
 
-  // Filtered barang options based on search query
   const barangOptions = useMemo(() => {
     const q = barangQuery.toLowerCase();
     if (!q) return barangList;
@@ -106,7 +95,6 @@ export default function PreOrder() {
     setBarangOpen(false);
   }
 
-  // Enrich list with status
   const enriched = useMemo(() => {
     return list.map(po => ({
       ...po,
@@ -143,7 +131,6 @@ export default function PreOrder() {
     });
   }, [enriched, search, statusFilter, startDate, endDate]);
 
-  // Summary counts
   const counts = useMemo(() => {
     return enriched.reduce((acc, po) => {
       acc[po.status.label] = (acc[po.status.label] || 0) + 1;
@@ -183,7 +170,6 @@ export default function PreOrder() {
     if (!form.qty || parseInt(form.qty) <= 0) { toast.error('Quantity harus lebih dari 0'); return; }
     setSaving(true);
     try {
-      // Auto-transfer to Barang Masuk when status = Sudah Dibongkar
       if (form.keterangan_status === 'Sudah Dibongkar') {
         const barang = barangList.find(
           b => b.kode === form.kode_barang || b.nama === form.deskripsi
@@ -196,7 +182,7 @@ export default function PreOrder() {
           qty:         parseInt(form.qty),
           keterangan:  `Dari PO: ${form.catatan || form.deskripsi}`.trim(),
         });
-        // Delete the PO after transfer
+
         if (editTarget) await deletePreOrder(editTarget.id);
         toast.success(`PO dipindahkan ke Barang Masuk: ${form.deskripsi}`);
         setModalOpen(false);
@@ -247,7 +233,6 @@ export default function PreOrder() {
 
   return (
     <div className="space-y-5">
-      {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { label: 'Total PO', value: enriched.length, color: 'blue' },
@@ -267,7 +252,6 @@ export default function PreOrder() {
         ))}
       </div>
 
-      {/* Header Toolbar */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex-1 flex gap-2">
@@ -310,7 +294,6 @@ export default function PreOrder() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -407,7 +390,6 @@ export default function PreOrder() {
         </div>
       </div>
 
-      {/* Legend */}
       <div className="bg-white rounded-xl border border-slate-200 p-4">
         <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-3">Keterangan Status PO</p>
         <div className="flex flex-col gap-3">
@@ -436,7 +418,6 @@ export default function PreOrder() {
         </div>
       </div>
 
-      {/* Add/Edit Modal */}
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -462,14 +443,12 @@ export default function PreOrder() {
             )}
           </div>
 
-          {/* Barang Combobox — Kode + Deskripsi */}
           <div>
             <label className="block text-sm text-slate-600 mb-1.5">
               Barang <span className="text-red-500">*</span>
               <span className="ml-1 text-xs text-slate-400 font-normal">(Kode & Deskripsi)</span>
             </label>
             <div className="relative" ref={comboRef}>
-              {/* Input */}
               <div className="relative flex items-center">
                 <Search size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
                 <input
@@ -477,7 +456,6 @@ export default function PreOrder() {
                   value={barangQuery}
                   onChange={e => {
                     setBarangQuery(e.target.value);
-                    // Allow manual override of deskripsi when typing freely
                     setForm(f => ({ ...f, deskripsi: e.target.value, kode_barang: '' }));
                     setBarangOpen(true);
                   }}
@@ -500,7 +478,6 @@ export default function PreOrder() {
                 </div>
               </div>
 
-              {/* Dropdown */}
               {barangOpen && (
                 <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg max-h-52 overflow-y-auto">
                   {barangOptions.length === 0 ? (
@@ -524,7 +501,6 @@ export default function PreOrder() {
                 </div>
               )}
             </div>
-            {/* Show selected kode & deskripsi as read-only hints */}
             {form.kode_barang && (
               <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-500">
                 <span className="font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{form.kode_barang}</span>
@@ -599,7 +575,6 @@ export default function PreOrder() {
         </form>
       </Modal>
 
-      {/* Delete Confirm */}
       <ConfirmDialog
         isOpen={!!deleteTarget}
         onConfirm={handleDelete}

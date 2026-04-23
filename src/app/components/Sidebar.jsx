@@ -21,7 +21,6 @@ export function Sidebar({ isOpen, onClose }) {
 
   return (
     <>
-      {/* Mobile overlay */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/30 backdrop-blur-sm z-30 lg:hidden"
@@ -29,7 +28,6 @@ export function Sidebar({ isOpen, onClose }) {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`
           fixed top-0 left-0 h-full w-64 bg-white border-r border-slate-200 z-40
@@ -37,7 +35,6 @@ export function Sidebar({ isOpen, onClose }) {
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
-        {/* Logo */}
         <div className="flex items-center justify-between px-5 h-16 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
@@ -56,7 +53,6 @@ export function Sidebar({ isOpen, onClose }) {
           </button>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 px-3 py-4 overflow-y-auto">
           <p className="px-2 mb-2 text-xs text-slate-400 uppercase tracking-wider">Menu Utama</p>
           <ul className="space-y-0.5">
@@ -89,7 +85,6 @@ export function Sidebar({ isOpen, onClose }) {
           </ul>
         </nav>
 
-        {/* Footer */}
         <div className="px-5 py-4 border-t border-slate-100">
           <p className="text-xs text-slate-400">Data Production v2.0</p>
           <p className="text-xs text-slate-300">Powered by Firebase Firestore</p>
