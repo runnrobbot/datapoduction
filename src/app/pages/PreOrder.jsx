@@ -441,7 +441,6 @@ export default function PreOrder() {
             qty:         parseInt(item.qty),
             keterangan:  `Dari PO: ${item.catatan || item.deskripsi}`.trim(),
           });
-          // Do not delete Pre Order anymore! We want it in History.
           await updatePreOrder(editTarget.id, dataToSave);
           toast.success(`PO dipindahkan ke Barang Masuk dan status diperbarui`);
         } else {

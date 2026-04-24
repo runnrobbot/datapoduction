@@ -18,7 +18,6 @@ export async function login(username, password) {
     return res;
   }
   
-  // Firebase login logic
   const q = query(collection(db, COL), where("username", "==", username), where("password", "==", password));
   const snap = await getDocs(q);
   if (snap.empty) throw new Error('Username atau password salah');
@@ -60,7 +59,6 @@ export async function addUser(data) {
     });
   }
   
-  // Firebase add logic
   const checkQ = query(collection(db, COL), where("username", "==", data.username));
   const checkSnap = await getDocs(checkQ);
   if (!checkSnap.empty) throw new Error('Username sudah dipakai');
@@ -88,7 +86,6 @@ export async function updateUser(id, data) {
       body: JSON.stringify(data)
     });
   } else {
-    // Firebase update logic
     if (data.username) {
       const checkQ = query(collection(db, COL), where("username", "==", data.username));
       const checkSnap = await getDocs(checkQ);
@@ -98,12 +95,10 @@ export async function updateUser(id, data) {
     const updateData = { ...data, updated_at: serverTimestamp() };
     await updateDoc(doc(db, COL, id), updateData);
     
-    // Fetch updated
     const userDoc = await getDoc(doc(db, COL, id));
     updatedUser = { id: userDoc.id, ...userDoc.data() };
   }
 
-  // Update session if it's the current user
   if (session?.id === id) {
     const { password, ...safe } = updatedUser;
     localStorage.setItem(SESSION_KEY, JSON.stringify(safe));
