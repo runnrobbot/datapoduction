@@ -233,7 +233,7 @@ export default function Dashboard() {
             {loading ? (
               <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-8 bg-slate-50 rounded animate-pulse" />)}</div>
             ) : lowStok.length === 0 ? (
-              <p className="text-slate-400 text-xs text-center py-4">Semua stok aman</p>
+              <p className="text-slate-400 text-xs text-center py-4">Semua stok aman ✓</p>
             ) : (
               <div className="space-y-2">
                 {lowStok.map(b => (
@@ -261,7 +261,7 @@ export default function Dashboard() {
             {loading ? (
               <div className="space-y-2">{[1,2].map(i => <div key={i} className="h-8 bg-slate-50 rounded animate-pulse" />)}</div>
             ) : urgentPO.length === 0 ? (
-              <p className="text-slate-400 text-xs text-center py-4">Tidak ada PO mendesak</p>
+              <p className="text-slate-400 text-xs text-center py-4">Tidak ada PO mendesak ✓</p>
             ) : (
               <div className="space-y-2">
                 {urgentPO.map(po => {

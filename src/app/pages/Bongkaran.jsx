@@ -22,57 +22,96 @@ const STATUS_STYLE = {
   'Sudah Dibongkar': 'bg-emerald-50 text-emerald-700 border border-emerald-100',
 };
 
-/* ─── Inline editable item row ────────────────────────── */
-function ItemEditRow({ item, index, onChange }) {
+/* ─── Single item row: preview + inline edit toggle ───── */
+function ItemRevisiRow({ item, index, onChange }) {
+  const [editing, setEditing] = useState(false);
+
   return (
-    <div className="grid grid-cols-12 gap-2 items-start py-3 border-b border-slate-100 last:border-0">
-      <div className="col-span-4">
-        <p className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded inline-block mb-0.5">
-          {item.kode_barang || '—'}
-        </p>
-        <p className="text-sm text-slate-700 font-medium truncate">{item.deskripsi || '—'}</p>
+    <div className="border border-slate-100 rounded-xl overflow-hidden">
+      {/* Preview row — always visible */}
+      <div className="flex items-start gap-3 px-4 py-3 bg-white">
+        {/* Barang info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+              {item.kode_barang || '—'}
+            </span>
+            <span className="text-sm font-semibold text-slate-800">{item.deskripsi || '—'}</span>
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+            <span><span className="font-medium text-slate-400">Box</span> {item.box || <em className="text-slate-300">—</em>}</span>
+            <span><span className="font-medium text-slate-400">Isi</span> {item.isi || <em className="text-slate-300">—</em>}</span>
+            <span><span className="font-medium text-slate-400">Qty</span> <strong className="text-slate-700">{item.qty || 0}</strong> pcs</span>
+            {item.catatan && <span><span className="font-medium text-slate-400">Ket.</span> {item.catatan}</span>}
+          </div>
+        </div>
+        {/* Edit toggle button */}
+        <button
+          type="button"
+          onClick={() => setEditing(e => !e)}
+          className={`shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+            editing
+              ? 'bg-slate-100 border-slate-200 text-slate-600'
+              : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 hover:border-emerald-200'
+          }`}
+        >
+          <Edit2 size={11} />
+          {editing ? 'Tutup' : 'Edit'}
+        </button>
       </div>
-      <div className="col-span-2">
-        <label className="block text-xs text-slate-400 mb-1">Box</label>
-        <input
-          type="text"
-          value={item.box || ''}
-          onChange={e => onChange(index, { box: e.target.value })}
-          placeholder="Box"
-          className="w-full px-2 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
-        />
-      </div>
-      <div className="col-span-2">
-        <label className="block text-xs text-slate-400 mb-1">Isi</label>
-        <input
-          type="text"
-          value={item.isi || ''}
-          onChange={e => onChange(index, { isi: e.target.value })}
-          placeholder="Isi"
-          className="w-full px-2 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
-        />
-      </div>
-      <div className="col-span-2">
-        <label className="block text-xs text-slate-400 mb-1">Qty</label>
-        <input
-          type="number"
-          value={item.qty || ''}
-          onChange={e => onChange(index, { qty: e.target.value })}
-          placeholder="0"
-          min="0"
-          className="w-full px-2 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
-        />
-      </div>
-      <div className="col-span-2">
-        <label className="block text-xs text-slate-400 mb-1">Keterangan</label>
-        <input
-          type="text"
-          value={item.catatan || ''}
-          onChange={e => onChange(index, { catatan: e.target.value })}
-          placeholder="Opsional"
-          className="w-full px-2 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
-        />
-      </div>
+
+      {/* Inline edit fields — only when editing */}
+      {editing && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          className="border-t border-slate-100 bg-slate-50 px-4 py-3 grid grid-cols-2 sm:grid-cols-4 gap-3"
+        >
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Box</label>
+            <input
+              type="text"
+              value={item.box || ''}
+              onChange={e => onChange(index, { box: e.target.value })}
+              placeholder="Cth: AA"
+              className="w-full px-2.5 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Isi</label>
+            <input
+              type="text"
+              value={item.isi || ''}
+              onChange={e => onChange(index, { isi: e.target.value })}
+              placeholder="Cth: 10 pcs"
+              className="w-full px-2.5 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Qty <span className="text-red-400">*</span></label>
+            <input
+              type="number"
+              value={item.qty || ''}
+              onChange={e => onChange(index, { qty: e.target.value })}
+              placeholder="0"
+              min="0"
+              className="w-full px-2.5 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Keterangan</label>
+            <input
+              type="text"
+              value={item.catatan || ''}
+              onChange={e => onChange(index, { catatan: e.target.value })}
+              placeholder="Opsional"
+              className="w-full px-2.5 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+            />
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
@@ -377,18 +416,13 @@ export default function Bongkaran() {
         onClose={() => setRevisiTarget(null)}
         title={`Revisi Bongkaran — PO ${revisiTarget?.tanggal_po || ''}`}
       >
-        <div className="space-y-4">
-          <p className="text-xs text-slate-500">Edit detail tiap produk sebelum dikonfirmasi masuk ke Barang Masuk.</p>
-          <div className="hidden sm:grid grid-cols-12 gap-2 px-0 pb-1 border-b border-slate-100">
-            <span className="col-span-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Barang</span>
-            <span className="col-span-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Box</span>
-            <span className="col-span-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Isi</span>
-            <span className="col-span-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Qty</span>
-            <span className="col-span-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Keterangan</span>
-          </div>
-          <div className="max-h-[50vh] overflow-y-auto space-y-1 pr-1">
+        <div className="space-y-3">
+          <p className="text-xs text-slate-500">
+            Cek detail tiap produk. Klik <strong className="text-slate-600">Edit</strong> pada item yang perlu diubah, lalu simpan.
+          </p>
+          <div className="max-h-[55vh] overflow-y-auto space-y-2 pr-0.5">
             {revisiItems.map((item, index) => (
-              <ItemEditRow
+              <ItemRevisiRow
                 key={index}
                 item={item}
                 index={index}
@@ -396,7 +430,7 @@ export default function Bongkaran() {
               />
             ))}
           </div>
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-1">
             <button
               type="button"
               onClick={() => setRevisiTarget(null)}
