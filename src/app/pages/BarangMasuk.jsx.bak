@@ -1,26 +1,24 @@
 import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
 import {
   Plus, Search, Edit2, Trash2, PackagePlus,
   RefreshCw, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAllMasuk, addMasuk, updateMasuk, deleteMasuk } from '../services/masukService';
-import { subscribeBarangMasuk } from '../services/realtimeService';
 import { getAllBarang } from '../services/barangService';
-import { useRealtimeFirestore } from '../hooks/useRealtime';
 import { Modal } from '../components/Modal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { LoadingTable } from '../components/LoadingTable';
 import { SearchDropdown } from '../components/SearchDropdown';
-import { AnimatedCard } from '../components/motionComponents';
 import { formatDate } from '../utils/helpers';
 
 const PAGE_SIZE = 50;
 
 export default function BarangMasuk() {
+  const [list, setList] = useState([]);
   const [barangList, setBarangList] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -35,15 +33,20 @@ export default function BarangMasuk() {
 
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  const { data: list, loading, refresh: loadAll } = useRealtimeFirestore(
-    subscribeBarangMasuk,
-    getAllMasuk,
-    30000
-  );
+  async function loadAll() {
+    setLoading(true);
+    try {
+      const [masuk, barang] = await Promise.all([getAllMasuk(), getAllBarang()]);
+      setList(masuk);
+      setBarangList(barang);
+    } catch (err) {
+      toast.error('Gagal memuat data: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  useEffect(() => {
-    getAllBarang().then(setBarangList).catch(() => {});
-  }, []);
+  useEffect(() => { loadAll(); }, []);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -135,33 +138,33 @@ export default function BarangMasuk() {
   return (
     <div className="space-y-5">
       <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
-        <div className="flex flex-col gap-3">
-          {/* Row 1: Search */}
-          <div className="relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={e => { setSearch(e.target.value); setPage(1); }}
-              placeholder="Cari nama, kode, atau keterangan..."
-              className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
-            />
-          </div>
-          {/* Row 2: Date range + buttons */}
-          <div className="flex gap-2 items-center">
-            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2 flex-1 min-w-0">
-              <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setPage(1); }} className="py-1.5 text-sm text-slate-600 bg-transparent focus:outline-none w-full min-w-0" />
-              <span className="text-slate-400 text-xs shrink-0">sd</span>
-              <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setPage(1); }} className="py-1.5 text-sm text-slate-600 bg-transparent focus:outline-none w-full min-w-0" />
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex-1 flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={e => { setSearch(e.target.value); setPage(1); }}
+                placeholder="Cari nama, kode, atau keterangan..."
+                className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+              />
             </div>
-            <button onClick={loadAll} className="shrink-0 flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">
+            <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2 w-full sm:w-auto">
+              <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setPage(1); }} className="py-1.5 text-sm text-slate-600 bg-transparent focus:outline-none flex-1" />
+              <span className="text-slate-400 text-xs">sd</span>
+              <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setPage(1); }} className="py-1.5 text-sm text-slate-600 bg-transparent focus:outline-none flex-1" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={loadAll} className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">
               <RefreshCw size={14} /> <span className="hidden sm:inline">Refresh</span>
             </button>
             <button
               onClick={openAdd}
-              className="shrink-0 flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-medium"
+              className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-medium"
             >
-              <Plus size={14} /> <span className="hidden sm:inline">Tambah Masuk</span><span className="sm:hidden">Masuk</span>
+              <Plus size={14} /> Tambah Masuk
             </button>
           </div>
         </div>

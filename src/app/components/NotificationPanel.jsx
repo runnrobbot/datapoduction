@@ -17,6 +17,9 @@ export function NotificationPanel() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unread, setUnread] = useState(0);
+  const [readTime, setReadTime] = useState(
+    parseInt(localStorage.getItem('lastReadNotificationTime') || '0')
+  );
   const ref = useRef(null);
 
   useEffect(() => {
@@ -60,13 +63,15 @@ export function NotificationPanel() {
         items.sort((a, b) => new Date(b.time) - new Date(a.time));
         const latest = items.slice(0, 8);
         setNotifications(latest);
-        setUnread(latest.length > 0 ? Math.min(latest.length, 5) : 0);
+        
+        const unreadCount = latest.filter(n => new Date(n.time).getTime() > readTime).length;
+        setUnread(unreadCount);
       } catch {
         setNotifications([]);
       }
     }
     load();
-  }, []);
+  }, [readTime]);
 
   useEffect(() => {
     function handleClick(e) {
@@ -80,6 +85,12 @@ export function NotificationPanel() {
 
   function handleOpen() {
     setOpen((v) => !v);
+  }
+
+  function markAsRead() {
+    const now = Date.now();
+    localStorage.setItem('lastReadNotificationTime', now.toString());
+    setReadTime(now);
     setUnread(0);
   }
 
@@ -108,12 +119,22 @@ export function NotificationPanel() {
                 Aktivitas Terbaru
               </span>
             </div>
-            <button
-              onClick={() => setOpen(false)}
-              className="text-slate-400 hover:text-slate-600 transition-colors"
-            >
-              <X size={14} />
-            </button>
+            <div className="flex items-center gap-3">
+              {unread > 0 && (
+                <button 
+                  onClick={markAsRead}
+                  className="text-[10px] uppercase tracking-wider font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md"
+                >
+                  Mark as Read
+                </button>
+              )}
+              <button
+                onClick={() => setOpen(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
           </div>
 
           <div className="max-h-72 overflow-y-auto">
@@ -125,18 +146,24 @@ export function NotificationPanel() {
             ) : (
               notifications.map((n) => {
                 const Icon = n.icon;
+                const isUnread = new Date(n.time).getTime() > readTime;
                 return (
                   <div
                     key={n.id}
-                    className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0"
+                    className={`flex items-start gap-3 px-4 py-3 transition-colors border-b border-slate-50 last:border-0 ${
+                      isUnread ? 'bg-slate-50/80 hover:bg-slate-100' : 'hover:bg-slate-50'
+                    }`}
                   >
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${n.bg}`}>
                       <Icon size={14} className={n.color} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-slate-700" style={{ fontSize: '0.8rem' }}>
-                        {n.title}
-                      </p>
+                      <div className="flex items-center justify-between">
+                        <p className={`font-medium text-slate-700 ${isUnread ? 'text-slate-800 font-bold' : ''}`} style={{ fontSize: '0.8rem' }}>
+                          {n.title}
+                        </p>
+                        {isUnread && <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>}
+                      </div>
                       <p className="text-slate-500 truncate" style={{ fontSize: '0.75rem' }}>
                         {n.desc}
                       </p>

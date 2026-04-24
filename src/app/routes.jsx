@@ -5,6 +5,7 @@ import Barang from './pages/Barang';
 import BarangMasuk from './pages/BarangMasuk';
 import Penjualan from './pages/Penjualan';
 import PreOrder from './pages/PreOrder';
+import Bongkaran from './pages/Bongkaran';
 import ManageUser from './pages/ManageUser';
 
 export const router = createBrowserRouter([
@@ -17,6 +18,7 @@ export const router = createBrowserRouter([
       { path: 'masuk', Component: BarangMasuk },
       { path: 'penjualan', Component: Penjualan },
       { path: 'pre-order', Component: PreOrder },
+      { path: 'bongkaran', Component: Bongkaran },
       { path: 'manage-user', Component: ManageUser },
     ]
   }

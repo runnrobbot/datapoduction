@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import {
   Plus, Search, Edit2, Trash2, Package,
   Upload, Download, RefreshCw, ChevronLeft, ChevronRight
@@ -7,10 +8,13 @@ import { toast } from 'sonner';
 import {
   getAllBarang, addBarang, updateBarang, deleteBarang
 } from '../services/barangService';
+import { subscribeBarang } from '../services/realtimeService';
+import { useRealtimeFirestore } from '../hooks/useRealtime';
 import { Modal } from '../components/Modal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { LoadingTable } from '../components/LoadingTable';
+import { AnimatedCard } from '../components/motionComponents';
 import { formatCurrency } from '../utils/helpers';
 import { parseFile } from '../utils/importUtils';
 import { exportToCSV, exportToExcel } from '../utils/exportUtils';
@@ -19,8 +23,11 @@ const PAGE_SIZE = 50;
 const INITIAL_FORM = { nama: '', kode: '', satuan: 'pcs', harga_jual: '' };
 
 export default function Barang() {
-  const [list, setList] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: list, loading, refresh: loadData } = useRealtimeFirestore(
+    subscribeBarang,
+    getAllBarang,
+    30000
+  );
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
@@ -36,20 +43,6 @@ export default function Barang() {
   const [importColumns, setImportColumns] = useState([]);
 
   const [deleteTarget, setDeleteTarget] = useState(null);
-
-  async function loadData() {
-    setLoading(true);
-    try {
-      const data = await getAllBarang();
-      setList(data);
-    } catch (err) {
-      toast.error('Gagal memuat data: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => { loadData(); }, []);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();

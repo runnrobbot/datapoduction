@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router';
+import { motion } from 'framer-motion';
 import {
   Package, TrendingUp, ShoppingCart, ClipboardList,
   ArrowRight, Boxes
@@ -12,7 +13,10 @@ import { getAllBarang } from '../services/barangService';
 import { getAllPenjualan } from '../services/penjualanService';
 import { getAllPreOrder } from '../services/preOrderService';
 import { getAllMasuk } from '../services/masukService';
+import { subscribeBarang, subscribePenjualan, subscribePreOrder, subscribeBarangMasuk } from '../services/realtimeService';
 import { StatCard } from '../components/StatCard';
+import { AnimatedCard, StaggerList, StaggerItem } from '../components/motionComponents';
+import { useRealtimeFirestore } from '../hooks/useRealtime';
 import { getPOStatus, formatCurrency, formatDate, toDate } from '../utils/helpers';
 
 const COLORS = ['#059669', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
@@ -34,42 +38,27 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function Dashboard() {
-  const [barangList, setBarangList] = useState([]);
-  const [penjualanList, setPenjualanList] = useState([]);
-  const [preOrderList, setPreOrderList] = useState([]);
-  const [recentMasuk, setRecentMasuk] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: barangList,   loading: l1 } = useRealtimeFirestore(subscribeBarang,      getAllBarang,      30000);
+  const { data: penjualanList,loading: l2 } = useRealtimeFirestore(subscribePenjualan,   getAllPenjualan,   30000);
+  const { data: preOrderList, loading: l3 } = useRealtimeFirestore(subscribePreOrder,    getAllPreOrder,    30000);
+  const { data: masukAll,     loading: l4 } = useRealtimeFirestore(subscribeBarangMasuk, getAllMasuk,       30000);
 
-  useEffect(() => {
-    async function loadAll() {
-      try {
-        const [barang, penjualan, po, masuk] = await Promise.all([
-          getAllBarang(),
-          getAllPenjualan(),
-          getAllPreOrder(),
-          getAllMasuk()
-        ]);
-        setBarangList(barang);
-        setPenjualanList(penjualan);
-        setPreOrderList(po);
-        setRecentMasuk(masuk.slice(0, 5));
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadAll();
-  }, []);
+  const loading     = l1 || l2 || l3 || l4;
+  const recentMasuk = masukAll.slice(0, 5);
 
   const stats = useMemo(() => {
     const totalTerjual = penjualanList.reduce((s, p) => s + (parseInt(p.qty) || 0), 0);
     const totalRevenue = penjualanList.reduce((s, p) => s + ((parseInt(p.qty) || 0) * (parseFloat(p.harga) || 0)), 0);
     const totalStok = barangList.reduce((s, b) => s + (parseInt(b.stok) || 0), 0);
+
+    // PO aktif = belum selesai (bukan Sudah Tiba / Sudah Dibongkar) DAN bukan Overdue
     const activePreOrder = preOrderList.filter(po => {
+      const selesai = po.keterangan_status === 'Sudah Tiba' || po.keterangan_status === 'Sudah Dibongkar';
+      if (selesai) return false;
       const { label } = getPOStatus(po.tanggal_po);
       return label !== 'Overdue';
     }).length;
+
     return { totalTerjual, totalRevenue, totalStok, activePreOrder };
   }, [barangList, penjualanList, preOrderList]);
 
@@ -96,7 +85,13 @@ export default function Dashboard() {
 
   const recentSales = penjualanList.slice(0, 10);
   const lowStok = barangList.filter(b => b.stok <= 5 && b.stok >= 0).slice(0, 5);
+
+  // PO Mendesak: hanya yang belum Sudah Tiba / Sudah Dibongkar, dan status tanggal red/yellow
   const urgentPO = preOrderList
+    .filter(po => {
+      const selesai = po.keterangan_status === 'Sudah Tiba' || po.keterangan_status === 'Sudah Dibongkar';
+      return !selesai;
+    })
     .map(po => ({ ...po, status: getPOStatus(po.tanggal_po) }))
     .filter(po => po.status.color === 'red' || po.status.color === 'yellow')
     .slice(0, 5);
@@ -104,34 +99,16 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Total Terjual"
-          value={loading ? '…' : stats.totalTerjual.toLocaleString()}
-          icon={ShoppingCart}
-          color="emerald"
-          loading={loading}
-        />
-        <StatCard
-          label="Total Revenue"
-          value={loading ? '…' : formatCurrency(stats.totalRevenue)}
-          icon={TrendingUp}
-          color="blue"
-          loading={loading}
-        />
-        <StatCard
-          label="Total Stok"
-          value={loading ? '…' : stats.totalStok.toLocaleString()}
-          icon={Boxes}
-          color="violet"
-          loading={loading}
-        />
-        <StatCard
-          label="Pre Order Aktif"
-          value={loading ? '…' : stats.activePreOrder.toString()}
-          icon={ClipboardList}
-          color="amber"
-          loading={loading}
-        />
+        {[
+          { label: 'Total Terjual', value: loading ? '…' : stats.totalTerjual.toLocaleString(), icon: ShoppingCart, color: 'emerald' },
+          { label: 'Total Revenue',  value: loading ? '…' : formatCurrency(stats.totalRevenue),  icon: TrendingUp,   color: 'blue' },
+          { label: 'Total Stok',     value: loading ? '…' : stats.totalStok.toLocaleString(),     icon: Boxes,        color: 'violet' },
+          { label: 'Pre Order Aktif',value: loading ? '…' : stats.activePreOrder.toString(),      icon: ClipboardList,color: 'amber' },
+        ].map((card, idx) => (
+          <AnimatedCard key={card.label} delay={idx * 0.08}>
+            <StatCard label={card.label} value={card.value} icon={card.icon} color={card.color} loading={loading} />
+          </AnimatedCard>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -256,7 +233,7 @@ export default function Dashboard() {
             {loading ? (
               <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-8 bg-slate-50 rounded animate-pulse" />)}</div>
             ) : lowStok.length === 0 ? (
-              <p className="text-slate-400 text-xs text-center py-4">Semua stok aman ✓</p>
+              <p className="text-slate-400 text-xs text-center py-4">Semua stok aman</p>
             ) : (
               <div className="space-y-2">
                 {lowStok.map(b => (
@@ -284,22 +261,32 @@ export default function Dashboard() {
             {loading ? (
               <div className="space-y-2">{[1,2].map(i => <div key={i} className="h-8 bg-slate-50 rounded animate-pulse" />)}</div>
             ) : urgentPO.length === 0 ? (
-              <p className="text-slate-400 text-xs text-center py-4">Tidak ada PO mendesak ✓</p>
+              <p className="text-slate-400 text-xs text-center py-4">Tidak ada PO mendesak</p>
             ) : (
               <div className="space-y-2">
-                {urgentPO.map(po => (
-                  <div key={po.id} className="flex items-center justify-between py-1.5 border-b border-slate-50 last:border-0">
-                    <div>
-                      <p className="text-xs font-mono font-semibold text-slate-700">{po.kode_barang || '—'}</p>
-                      <p className="text-xs text-slate-400">{po.status.message}</p>
+                {urgentPO.map(po => {
+                  const firstItem = po.items?.[0];
+                  const itemCount = po.items?.length || 0;
+                  return (
+                    <div key={po.id} className="flex items-center justify-between py-1.5 border-b border-slate-50 last:border-0">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-slate-700 truncate">
+                          {firstItem?.kode_barang
+                            ? <span className="font-mono text-emerald-600">{firstItem.kode_barang}</span>
+                            : <span className="text-slate-400">Tanggal PO</span>
+                          }
+                          {itemCount > 1 && <span className="text-slate-400 ml-1">+{itemCount - 1} item</span>}
+                        </p>
+                        <p className="text-xs text-slate-400">{po.tanggal_po} · {po.status.message}</p>
+                      </div>
+                      <span className={`ml-2 shrink-0 text-xs font-bold px-2 py-0.5 rounded-full ${
+                        po.status.color === 'red' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
+                      }`}>
+                        {po.status.label}
+                      </span>
                     </div>
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                      po.status.color === 'red' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
-                    }`}>
-                      {po.status.label}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

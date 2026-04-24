@@ -108,3 +108,9 @@ export async function deleteMasuk(id) {
     transaction.delete(masukRef);
   });
 }
+
+import { onSnapshot } from 'firebase/firestore';
+export function subscribeMasuk(onData, onError) {
+  const q = query(collection(db, 'barang_masuk'), orderBy('created_at', 'desc'));
+  return onSnapshot(q, snap => onData(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onError);
+}

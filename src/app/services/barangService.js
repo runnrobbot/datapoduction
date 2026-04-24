@@ -75,3 +75,9 @@ export async function deleteBarang(id) {
   }
   return await deleteDoc(doc(db, COL, id));
 }
+
+import { onSnapshot } from 'firebase/firestore';
+export function subscribeBarang(onData, onError) {
+  const q = query(collection(db, 'barang'), orderBy('nama', 'asc'));
+  return onSnapshot(q, snap => onData(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onError);
+}

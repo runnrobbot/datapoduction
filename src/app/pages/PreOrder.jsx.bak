@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { motion } from 'framer-motion';
 import {
   Plus, Search, Edit2, Trash2, ClipboardList,
   RefreshCw, Clock, AlertTriangle, CheckCircle, ChevronDown, X, Truck, History
@@ -7,15 +6,12 @@ import {
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import { getAllPreOrder, addPreOrder, updatePreOrder, deletePreOrder } from '../services/preOrderService';
-import { subscribePreOrder } from '../services/realtimeService';
 import { addBongkaran } from '../services/bongkaranService';
 import { getAllBarang } from '../services/barangService';
-import { useRealtimeFirestore } from '../hooks/useRealtime';
 import { Modal } from '../components/Modal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { LoadingTable } from '../components/LoadingTable';
-import { AnimatedCard } from '../components/motionComponents';
 import { getPOStatus, formatDate } from '../utils/helpers';
 
 const KET_STATUS_OPTIONS = ['Masih Dijalan', 'Sudah Tiba', 'Sudah Dibongkar'];
@@ -344,6 +340,8 @@ function POTable({ data, loading, emptyTitle, emptyDesc, onEdit, onDelete, isHis
 export default function PreOrder() {
   const { user } = useAuth();
   const isSuperAdmin = user?.role === 'super_admin';
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [startDate, setStartDate] = useState('');
@@ -355,15 +353,20 @@ export default function PreOrder() {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  const { data: list, loading, refresh: loadData } = useRealtimeFirestore(
-    subscribePreOrder,
-    getAllPreOrder,
-    30000
-  );
+  async function loadData() {
+    setLoading(true);
+    try {
+      const [poData, brg] = await Promise.all([getAllPreOrder(), getAllBarang()]);
+      setList(poData);
+      setBarangList(brg);
+    } catch (err) {
+      toast.error('Gagal memuat data: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  useEffect(() => {
-    getAllBarang().then(setBarangList).catch(() => {});
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   const enriched = useMemo(() => {
     return list.map(po => ({
@@ -513,32 +516,23 @@ export default function PreOrder() {
           { label: 'Overdue', value: counts['Overdue'] || 0, color: 'red' },
           { label: 'Urgent / Segera', value: (counts['Urgent'] || 0) + (counts['Segera'] || 0), color: 'amber' },
           { label: 'Masih Lama', value: counts['Masih Lama'] || 0, color: 'green' }
-        ].map((card, idx) => (
-          <AnimatedCard key={card.label} delay={idx * 0.07} className="bg-white rounded-xl border border-slate-200 p-4">
+        ].map(card => (
+          <div key={card.label} className="bg-white rounded-xl border border-slate-200 p-4">
             <p className="text-xs text-slate-500 uppercase tracking-wider">{card.label}</p>
-            <motion.p
-              key={card.value}
-              className={`text-2xl font-bold mt-1 ${
-                card.color === 'red' ? 'text-red-600' :
-                card.color === 'amber' ? 'text-amber-600' :
-                card.color === 'green' ? 'text-emerald-600' :
-                'text-slate-800'
-              }`}
-              initial={{ scale: 0.85, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.25 }}
-            >
-              {loading ? '…' : card.value}
-            </motion.p>
-          </AnimatedCard>
+            <p className={`text-2xl font-bold mt-1 ${
+              card.color === 'red' ? 'text-red-600' :
+              card.color === 'amber' ? 'text-amber-600' :
+              card.color === 'green' ? 'text-emerald-600' :
+              'text-slate-800'
+            }`}>{loading ? '…' : card.value}</p>
+          </div>
         ))}
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
-        <div className="flex flex-col gap-3">
-          {/* Row 1: Search + Status */}
-          <div className="flex gap-2">
-            <div className="relative flex-1 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex-1 flex gap-2">
+            <div className="relative flex-1">
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
@@ -551,28 +545,27 @@ export default function PreOrder() {
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              className="shrink-0 px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+              className="px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
             >
               {STATUS_FILTER.map(s => (
                 <option key={s} value={s}>{s === 'all' ? 'Semua Status' : s}</option>
               ))}
             </select>
-          </div>
-          {/* Row 2: Date range + Action buttons */}
-          <div className="flex gap-2 items-center">
-            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2 flex-1 min-w-0">
-              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="py-1.5 text-sm text-slate-600 bg-transparent focus:outline-none w-full min-w-0" />
-              <span className="text-slate-400 text-xs shrink-0">sd</span>
-              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="py-1.5 text-sm text-slate-600 bg-transparent focus:outline-none w-full min-w-0" />
+            <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2 w-full sm:w-auto mt-2 sm:mt-0">
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="py-1.5 text-sm text-slate-600 bg-transparent focus:outline-none flex-1" />
+              <span className="text-slate-400 text-xs">sd</span>
+              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="py-1.5 text-sm text-slate-600 bg-transparent focus:outline-none flex-1" />
             </div>
-            <button onClick={loadData} className="shrink-0 flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={loadData} className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">
               <RefreshCw size={14} /> <span className="hidden sm:inline">Refresh</span>
             </button>
             <button
               onClick={openAdd}
-              className="shrink-0 flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-medium"
+              className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-medium"
             >
-              <Plus size={14} /> <span className="hidden xs:inline sm:inline">Tambah PO</span><span className="xs:hidden sm:hidden">PO</span>
+              <Plus size={14} /> Tambah PO
             </button>
           </div>
         </div>

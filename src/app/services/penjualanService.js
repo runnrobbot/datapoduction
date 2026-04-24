@@ -108,3 +108,9 @@ export async function batchImportPenjualan(items) {
     await batch.commit();
   }
 }
+
+import { onSnapshot } from 'firebase/firestore';
+export function subscribePenjualan(onData, onError) {
+  const q = query(collection(db, 'penjualan'), orderBy('created_at', 'desc'));
+  return onSnapshot(q, snap => onData(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onError);
+}
