@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Plus, Search, Edit2, Trash2, ClipboardList,
-  RefreshCw, Clock, AlertTriangle, CheckCircle, ChevronDown, X, Truck
+  RefreshCw, Clock, AlertTriangle, CheckCircle, ChevronDown, X, Truck, History
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAllPreOrder, addPreOrder, updatePreOrder, deletePreOrder } from '../services/preOrderService';
@@ -21,17 +21,275 @@ const KET_STATUS_STYLE = {
   'Sudah Dibongkar':'bg-emerald-50 text-emerald-700 border border-emerald-100',
 };
 
-const STATUS_FILTER = ['all', 'Overdue', 'Urgent', 'Segera', 'Masih Lama', 'Masih Dijalan', 'Sudah Tiba'];
+const STATUS_FILTER = ['all', 'Overdue', 'Urgent', 'Segera', 'Masih Lama', 'Masih Dijalan', 'Sudah Tiba', 'Sudah Dibongkar'];
 
-const INITIAL_FORM = {
-  tanggal_po: '',
+const INITIAL_ITEM = {
   kode_barang: '',
   deskripsi: '',
   box: '',
   qty: '',
-  catatan: '',
-  keterangan_status: ''
+  catatan: ''
 };
+
+const INITIAL_FORM = {
+  tanggal_po: '',
+  keterangan_status: '',
+  items: [{ ...INITIAL_ITEM }]
+};
+
+function ItemFormRow({ item, index, updateItem, removeItem, barangList, allowRemove }) {
+  const [query, setQuery] = useState(item.kode_barang ? `${item.kode_barang} — ${item.deskripsi}` : item.deskripsi);
+  const [open, setOpen] = useState(false);
+  const comboRef = useRef(null);
+
+  useEffect(() => {
+    function handleOutside(e) {
+      if (comboRef.current && !comboRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  const options = useMemo(() => {
+    const q = query.toLowerCase();
+    if (!q) return barangList;
+    return barangList.filter(b =>
+      b.kode?.toLowerCase().includes(q) ||
+      b.nama?.toLowerCase().includes(q)
+    );
+  }, [barangList, query]);
+
+  function selectBarang(b) {
+    updateItem(index, { kode_barang: b.kode || '', deskripsi: b.nama || '' });
+    setQuery(b.kode ? `${b.kode} — ${b.nama}` : b.nama);
+    setOpen(false);
+  }
+
+  function clearBarang() {
+    updateItem(index, { kode_barang: '', deskripsi: '' });
+    setQuery('');
+    setOpen(false);
+  }
+
+  return (
+    <div className="p-4 border border-slate-200 rounded-lg bg-slate-50 relative space-y-4">
+      {allowRemove && (
+        <button type="button" onClick={() => removeItem(index)} className="absolute top-2 right-2 text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors">
+          <Trash2 size={16} />
+        </button>
+      )}
+      
+      <div className={allowRemove ? 'pr-8' : ''}>
+        <label className="block text-sm text-slate-600 mb-1.5">
+          Barang <span className="text-red-500">*</span>
+        </label>
+        <div className="relative" ref={comboRef}>
+          <div className="relative flex items-center">
+            <Search size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              value={query}
+              onChange={e => {
+                setQuery(e.target.value);
+                updateItem(index, { deskripsi: e.target.value, kode_barang: '' });
+                setOpen(true);
+              }}
+              onFocus={() => setOpen(true)}
+              placeholder="Cari kode atau nama barang..."
+              required
+              className="w-full pl-8 pr-16 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+            />
+            <div className="absolute right-2 flex items-center gap-1">
+              {query && (
+                <button type="button" onClick={clearBarang}
+                  className="p-1 text-slate-400 hover:text-slate-600 rounded">
+                  <X size={12} />
+                </button>
+              )}
+              <button type="button" onClick={() => setOpen(o => !o)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded">
+                <ChevronDown size={14} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+          </div>
+
+          {open && (
+            <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg max-h-52 overflow-y-auto">
+              {options.length === 0 ? (
+                <div className="px-4 py-3 text-sm text-slate-400 text-center">Barang tidak ditemukan</div>
+              ) : (
+                options.map(b => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onMouseDown={() => selectBarang(b)}
+                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-emerald-50 transition-colors border-b border-slate-50 last:border-0"
+                  >
+                    <span className="font-mono text-xs font-bold text-emerald-600 mr-2 bg-emerald-50 px-1.5 py-0.5 rounded">
+                      {b.kode || '—'}
+                    </span>
+                    <span className="text-slate-700">{b.nama}</span>
+                    <span className="ml-2 text-xs text-slate-400">{b.satuan}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+        {item.kode_barang && (
+          <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-500">
+            <span className="font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{item.kode_barang}</span>
+            <span className="truncate">{item.deskripsi}</span>
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm text-slate-600 mb-1.5">Box</label>
+          <input
+            type="text"
+            value={item.box}
+            onChange={e => updateItem(index, { box: e.target.value })}
+            placeholder="Cth: Box A"
+            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-slate-600 mb-1.5">Qty <span className="text-red-500">*</span></label>
+          <input
+            type="number"
+            value={item.qty}
+            onChange={e => updateItem(index, { qty: e.target.value })}
+            placeholder="0"
+            min="1"
+            required
+            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm text-slate-600 mb-1.5">Catatan</label>
+        <input
+          type="text"
+          value={item.catatan}
+          onChange={e => updateItem(index, { catatan: e.target.value })}
+          placeholder="Informasi tambahan..."
+          className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+        />
+      </div>
+    </div>
+  );
+}
+
+const statusBadgeClass = (color) => {
+  if (color === 'red') return 'bg-red-50 text-red-600 border border-red-100';
+  if (color === 'yellow') return 'bg-amber-50 text-amber-600 border border-amber-100';
+  if (color === 'green') return 'bg-emerald-50 text-emerald-600 border border-emerald-100';
+  return 'bg-slate-50 text-slate-500 border border-slate-200';
+};
+
+const statusIcon = (color) => {
+  if (color === 'red') return <AlertTriangle size={10} className="text-red-500" />;
+  if (color === 'yellow') return <Clock size={10} className="text-amber-500" />;
+  return <CheckCircle size={10} className="text-emerald-500" />;
+};
+
+function POTable({ data, loading, emptyTitle, emptyDesc, onEdit, onDelete }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full">
+        <thead className="bg-slate-50 border-b border-slate-200">
+          <tr>
+            {['Tanggal PO', 'Kode Barang', 'Deskripsi', 'Qty', 'Status', 'Countdown', 'Aksi'].map(h => (
+              <th key={h} className="text-left px-4 py-3 text-xs text-slate-500 uppercase tracking-wider font-semibold whitespace-nowrap">{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {loading ? (
+            <tr><td colSpan={7} className="px-4"><LoadingTable cols={7} rows={3} /></td></tr>
+          ) : data.length === 0 ? (
+            <tr>
+              <td colSpan={7}>
+                <EmptyState
+                  icon={ClipboardList}
+                  title={emptyTitle}
+                  description={emptyDesc}
+                />
+              </td>
+            </tr>
+          ) : (
+            data.map(po => (
+              <tr key={po.id} className={`border-b border-slate-50 hover:bg-slate-50 transition-colors ${
+                po.status.color === 'red' ? 'border-l-2 border-l-red-400' :
+                po.status.color === 'yellow' ? 'border-l-2 border-l-amber-400' : ''
+              }`}>
+                <td className="px-4 py-3">
+                  <p className="text-xs text-slate-700 font-medium whitespace-nowrap">{po.tanggal_po}</p>
+                  <p className="text-xs text-slate-400">{formatDate(po.created_at)}</p>
+                </td>
+                <td className="px-4 py-3">
+                  <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
+                    {po.kode_barang || '—'}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <p className="text-sm text-slate-800 font-medium max-w-[180px] truncate">{po.deskripsi}</p>
+                  {po.catatan && <p className="text-xs text-slate-400 truncate max-w-[180px]">{po.catatan}</p>}
+                </td>
+                <td className="px-4 py-3">
+                  <span className="text-sm font-bold text-slate-700">{po.qty}</span>
+                </td>
+                <td className="px-4 py-3">
+                  {po.keterangan_status ? (
+                    <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold ${KET_STATUS_STYLE[po.keterangan_status] || 'bg-slate-50 text-slate-500 border border-slate-200'}`}>
+                      <Truck size={10} />
+                      {po.keterangan_status}
+                    </span>
+                  ) : (
+                    <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold ${statusBadgeClass(po.status.color)}`}>
+                      {statusIcon(po.status.color)}
+                      {po.status.label}
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  <p className={`text-sm font-semibold ${
+                    po.status.color === 'red' ? 'text-red-600' :
+                    po.status.color === 'yellow' ? 'text-amber-600' :
+                    'text-emerald-600'
+                  }`}>
+                    {po.status.message}
+                  </p>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => onEdit(po)}
+                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100"
+                    >
+                      <Edit2 size={11} /> Edit
+                    </button>
+                    <button
+                      onClick={() => onDelete(po)}
+                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg border border-red-100 text-red-500 hover:bg-red-50"
+                    >
+                      <Trash2 size={11} /> Hapus
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export default function PreOrder() {
   const [list, setList] = useState([]);
@@ -45,9 +303,6 @@ export default function PreOrder() {
   const [editTarget, setEditTarget] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);
   const [saving, setSaving] = useState(false);
-  const [barangQuery, setBarangQuery] = useState('');
-  const [barangOpen, setBarangOpen] = useState(false);
-  const comboRef = useRef(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   async function loadData() {
@@ -64,36 +319,6 @@ export default function PreOrder() {
   }
 
   useEffect(() => { loadData(); }, []);
-  useEffect(() => {
-    function handleOutside(e) {
-      if (comboRef.current && !comboRef.current.contains(e.target)) {
-        setBarangOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, []);
-
-  const barangOptions = useMemo(() => {
-    const q = barangQuery.toLowerCase();
-    if (!q) return barangList;
-    return barangList.filter(b =>
-      b.kode?.toLowerCase().includes(q) ||
-      b.nama?.toLowerCase().includes(q)
-    );
-  }, [barangList, barangQuery]);
-
-  function selectBarang(b) {
-    setForm(f => ({ ...f, kode_barang: b.kode || '', deskripsi: b.nama || '' }));
-    setBarangQuery(b.kode ? `${b.kode} — ${b.nama}` : b.nama);
-    setBarangOpen(false);
-  }
-
-  function clearBarang() {
-    setForm(f => ({ ...f, kode_barang: '', deskripsi: '' }));
-    setBarangQuery('');
-    setBarangOpen(false);
-  }
 
   const enriched = useMemo(() => {
     return list.map(po => ({
@@ -131,6 +356,9 @@ export default function PreOrder() {
     });
   }, [enriched, search, statusFilter, startDate, endDate]);
 
+  const activeFiltered = useMemo(() => filtered.filter(po => po.keterangan_status !== 'Sudah Dibongkar'), [filtered]);
+  const historyFiltered = useMemo(() => filtered.filter(po => po.keterangan_status === 'Sudah Dibongkar'), [filtered]);
+
   const counts = useMemo(() => {
     return enriched.reduce((acc, po) => {
       acc[po.status.label] = (acc[po.status.label] || 0) + 1;
@@ -139,8 +367,7 @@ export default function PreOrder() {
   }, [enriched]);
 
   function openAdd() {
-    setForm({ ...INITIAL_FORM, tanggal_po: new Date().toISOString().split('T')[0] });
-    setBarangQuery('');
+    setForm({ ...INITIAL_FORM, tanggal_po: new Date().toISOString().split('T')[0], items: [{ ...INITIAL_ITEM }] });
     setEditTarget(null);
     setModalOpen(true);
   }
@@ -148,53 +375,104 @@ export default function PreOrder() {
   function openEdit(item) {
     setForm({
       tanggal_po: item.tanggal_po || '',
-      kode_barang: item.kode_barang || '',
-      deskripsi: item.deskripsi || '',
-      box: item.box || '',
-      qty: item.qty?.toString() || '',
-      catatan: item.catatan || '',
-      keterangan_status: item.keterangan_status || ''
+      keterangan_status: item.keterangan_status || '',
+      items: [{
+        kode_barang: item.kode_barang || '',
+        deskripsi: item.deskripsi || '',
+        box: item.box || '',
+        qty: item.qty?.toString() || '',
+        catatan: item.catatan || ''
+      }]
     });
-    const label = item.kode_barang
-      ? `${item.kode_barang} — ${item.deskripsi}`
-      : (item.deskripsi || '');
-    setBarangQuery(label);
     setEditTarget(item);
     setModalOpen(true);
+  }
+
+  function updateItem(index, updates) {
+    setForm(f => {
+      const newItems = [...f.items];
+      newItems[index] = { ...newItems[index], ...updates };
+      return { ...f, items: newItems };
+    });
+  }
+
+  function addItem() {
+    setForm(f => ({ ...f, items: [...f.items, { ...INITIAL_ITEM }] }));
+  }
+
+  function removeItem(index) {
+    setForm(f => {
+      const newItems = f.items.filter((_, i) => i !== index);
+      return { ...f, items: newItems };
+    });
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.tanggal_po) { toast.error('Tanggal PO wajib diisi'); return; }
-    if (!form.deskripsi.trim()) { toast.error('Deskripsi wajib diisi'); return; }
-    if (!form.qty || parseInt(form.qty) <= 0) { toast.error('Quantity harus lebih dari 0'); return; }
+    if (form.items.length === 0) { toast.error('Minimal 1 barang harus ditambahkan'); return; }
+    
+    for (const item of form.items) {
+      if (!item.deskripsi.trim()) { toast.error('Deskripsi barang wajib diisi'); return; }
+      if (!item.qty || parseInt(item.qty) <= 0) { toast.error('Quantity harus lebih dari 0'); return; }
+    }
+
     setSaving(true);
     try {
-      if (form.keterangan_status === 'Sudah Dibongkar') {
-        const barang = barangList.find(
-          b => b.kode === form.kode_barang || b.nama === form.deskripsi
-        );
-        await addMasuk({
-          barang_id:   barang?.id || '',
-          kode_barang: form.kode_barang || '',
-          nama_barang: form.deskripsi,
-          satuan:      barang?.satuan || 'pcs',
-          qty:         parseInt(form.qty),
-          keterangan:  `Dari PO: ${form.catatan || form.deskripsi}`.trim(),
-        });
-
-        if (editTarget) await deletePreOrder(editTarget.id);
-        toast.success(`PO dipindahkan ke Barang Masuk: ${form.deskripsi}`);
-        setModalOpen(false);
-        loadData();
-        return;
-      }
-
       if (editTarget) {
-        await updatePreOrder(editTarget.id, form);
-        toast.success('Pre Order berhasil diperbarui');
+        const item = form.items[0];
+        const dataToSave = {
+          tanggal_po: form.tanggal_po,
+          keterangan_status: form.keterangan_status,
+          kode_barang: item.kode_barang,
+          deskripsi: item.deskripsi,
+          box: item.box,
+          qty: item.qty,
+          catatan: item.catatan,
+        };
+
+        if (form.keterangan_status === 'Sudah Dibongkar') {
+          const barang = barangList.find(b => b.kode === item.kode_barang || b.nama === item.deskripsi);
+          await addMasuk({
+            barang_id:   barang?.id || '',
+            kode_barang: item.kode_barang || '',
+            nama_barang: item.deskripsi,
+            satuan:      barang?.satuan || 'pcs',
+            qty:         parseInt(item.qty),
+            keterangan:  `Dari PO: ${item.catatan || item.deskripsi}`.trim(),
+          });
+          // Do not delete Pre Order anymore! We want it in History.
+          await updatePreOrder(editTarget.id, dataToSave);
+          toast.success(`PO dipindahkan ke Barang Masuk dan status diperbarui`);
+        } else {
+          await updatePreOrder(editTarget.id, dataToSave);
+          toast.success('Pre Order berhasil diperbarui');
+        }
       } else {
-        await addPreOrder(form);
+        for (const item of form.items) {
+          const dataToSave = {
+            tanggal_po: form.tanggal_po,
+            keterangan_status: form.keterangan_status,
+            kode_barang: item.kode_barang,
+            deskripsi: item.deskripsi,
+            box: item.box,
+            qty: item.qty,
+            catatan: item.catatan,
+          };
+          
+          if (form.keterangan_status === 'Sudah Dibongkar') {
+            const barang = barangList.find(b => b.kode === item.kode_barang || b.nama === item.deskripsi);
+            await addMasuk({
+              barang_id:   barang?.id || '',
+              kode_barang: item.kode_barang || '',
+              nama_barang: item.deskripsi,
+              satuan:      barang?.satuan || 'pcs',
+              qty:         parseInt(item.qty),
+              keterangan:  `Dari PO: ${item.catatan || item.deskripsi}`.trim(),
+            });
+          }
+          await addPreOrder(dataToSave);
+        }
         toast.success('Pre Order berhasil ditambahkan');
       }
       setModalOpen(false);
@@ -218,24 +496,11 @@ export default function PreOrder() {
     }
   }
 
-  const statusBadgeClass = (color) => {
-    if (color === 'red') return 'bg-red-50 text-red-600 border border-red-100';
-    if (color === 'yellow') return 'bg-amber-50 text-amber-600 border border-amber-100';
-    if (color === 'green') return 'bg-emerald-50 text-emerald-600 border border-emerald-100';
-    return 'bg-slate-50 text-slate-500 border border-slate-200';
-  };
-
-  const statusIcon = (color) => {
-    if (color === 'red') return <AlertTriangle size={10} className="text-red-500" />;
-    if (color === 'yellow') return <Clock size={10} className="text-amber-500" />;
-    return <CheckCircle size={10} className="text-emerald-500" />;
-  };
-
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Total PO', value: enriched.length, color: 'blue' },
+          { label: 'Total PO Aktif', value: activeFiltered.length, color: 'blue' },
           { label: 'Overdue', value: counts['Overdue'] || 0, color: 'red' },
           { label: 'Urgent / Segera', value: (counts['Urgent'] || 0) + (counts['Segera'] || 0), color: 'amber' },
           { label: 'Masih Lama', value: counts['Masih Lama'] || 0, color: 'green' }
@@ -295,99 +560,18 @@ export default function PreOrder() {
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                {['Tanggal PO', 'Kode Barang', 'Deskripsi', 'Qty', 'Status', 'Countdown', 'Aksi'].map(h => (
-                  <th key={h} className="text-left px-4 py-3 text-xs text-slate-500 uppercase tracking-wider font-semibold whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={7} className="px-4"><LoadingTable cols={7} rows={6} /></td></tr>
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={7}>
-                    <EmptyState
-                      icon={ClipboardList}
-                      title={search || statusFilter !== 'all' ? 'Tidak ada hasil' : 'Belum ada Pre Order'}
-                      description="Klik Tambah PO untuk membuat pre-order baru"
-                      action={(!search && statusFilter === 'all') && (
-                        <button onClick={openAdd} className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">
-                          <Plus size={14} /> Tambah PO
-                        </button>
-                      )}
-                    />
-                  </td>
-                </tr>
-              ) : (
-                filtered.map(po => (
-                  <tr key={po.id} className={`border-b border-slate-50 hover:bg-slate-50 transition-colors ${
-                    po.status.color === 'red' ? 'border-l-2 border-l-red-400' :
-                    po.status.color === 'yellow' ? 'border-l-2 border-l-amber-400' : ''
-                  }`}>
-                    <td className="px-4 py-3">
-                      <p className="text-xs text-slate-700 font-medium whitespace-nowrap">{po.tanggal_po}</p>
-                      <p className="text-xs text-slate-400">{formatDate(po.created_at)}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
-                        {po.kode_barang || '—'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="text-sm text-slate-800 font-medium max-w-[180px] truncate">{po.deskripsi}</p>
-                      {po.catatan && <p className="text-xs text-slate-400 truncate max-w-[180px]">{po.catatan}</p>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm font-bold text-slate-700">{po.qty}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {po.keterangan_status ? (
-                        <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold ${KET_STATUS_STYLE[po.keterangan_status] || 'bg-slate-50 text-slate-500 border border-slate-200'}`}>
-                          <Truck size={10} />
-                          {po.keterangan_status}
-                        </span>
-                      ) : (
-                        <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold ${statusBadgeClass(po.status.color)}`}>
-                          {statusIcon(po.status.color)}
-                          {po.status.label}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className={`text-sm font-semibold ${
-                        po.status.color === 'red' ? 'text-red-600' :
-                        po.status.color === 'yellow' ? 'text-amber-600' :
-                        'text-emerald-600'
-                      }`}>
-                        {po.status.message}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => openEdit(po)}
-                          className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100"
-                        >
-                          <Edit2 size={11} /> Edit
-                        </button>
-                        <button
-                          onClick={() => setDeleteTarget(po)}
-                          className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg border border-red-100 text-red-500 hover:bg-red-50"
-                        >
-                          <Trash2 size={11} /> Hapus
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center gap-2">
+          <Clock size={16} className="text-slate-500" />
+          <h2 className="font-semibold text-slate-700 text-sm">Pre Order Aktif</h2>
         </div>
+        <POTable
+          data={activeFiltered}
+          loading={loading}
+          emptyTitle={search || statusFilter !== 'all' ? 'Tidak ada hasil aktif' : 'Belum ada Pre Order Aktif'}
+          emptyDesc="Data Pre Order aktif akan muncul di sini"
+          onEdit={openEdit}
+          onDelete={setDeleteTarget}
+        />
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-4">
@@ -403,7 +587,6 @@ export default function PreOrder() {
             ].map(s => (
                 <div key={s.label} className="flex items-center gap-2">
                   <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${statusBadgeClass(s.color)}`}>{s.label}</span>
-                  <span className="text-xs text-slate-400">{s.desc}</span>
                 </div>
             ))}
           </div>
@@ -416,6 +599,21 @@ export default function PreOrder() {
             ))}
           </div>
         </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="p-4 border-b border-slate-200 bg-emerald-50/50 flex items-center gap-2">
+          <History size={16} className="text-emerald-600" />
+          <h2 className="font-semibold text-emerald-800 text-sm">Pre Order History (Sudah Dibongkar)</h2>
+        </div>
+        <POTable
+          data={historyFiltered}
+          loading={loading}
+          emptyTitle={search || statusFilter !== 'all' ? 'Tidak ada history yang cocok' : 'Belum ada History PO'}
+          emptyDesc="PO yang sudah dibongkar akan masuk ke sini"
+          onEdit={openEdit}
+          onDelete={setDeleteTarget}
+        />
       </div>
 
       <Modal
@@ -443,94 +641,29 @@ export default function PreOrder() {
             )}
           </div>
 
-          <div>
-            <label className="block text-sm text-slate-600 mb-1.5">
-              Barang <span className="text-red-500">*</span>
-              <span className="ml-1 text-xs text-slate-400 font-normal">(Kode & Deskripsi)</span>
-            </label>
-            <div className="relative" ref={comboRef}>
-              <div className="relative flex items-center">
-                <Search size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
-                <input
-                  type="text"
-                  value={barangQuery}
-                  onChange={e => {
-                    setBarangQuery(e.target.value);
-                    setForm(f => ({ ...f, deskripsi: e.target.value, kode_barang: '' }));
-                    setBarangOpen(true);
-                  }}
-                  onFocus={() => setBarangOpen(true)}
-                  placeholder="Cari kode atau nama barang..."
-                  required
-                  className="w-full pl-8 pr-16 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
-                />
-                <div className="absolute right-2 flex items-center gap-1">
-                  {barangQuery && (
-                    <button type="button" onClick={clearBarang}
-                      className="p-1 text-slate-400 hover:text-slate-600 rounded">
-                      <X size={12} />
-                    </button>
-                  )}
-                  <button type="button" onClick={() => setBarangOpen(o => !o)}
-                    className="p-1 text-slate-400 hover:text-slate-600 rounded">
-                    <ChevronDown size={14} className={`transition-transform ${barangOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                </div>
-              </div>
-
-              {barangOpen && (
-                <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg max-h-52 overflow-y-auto">
-                  {barangOptions.length === 0 ? (
-                    <div className="px-4 py-3 text-sm text-slate-400 text-center">Barang tidak ditemukan</div>
-                  ) : (
-                    barangOptions.map(b => (
-                      <button
-                        key={b.id}
-                        type="button"
-                        onMouseDown={() => selectBarang(b)}
-                        className="w-full text-left px-4 py-2.5 text-sm hover:bg-emerald-50 transition-colors border-b border-slate-50 last:border-0"
-                      >
-                        <span className="font-mono text-xs font-bold text-emerald-600 mr-2 bg-emerald-50 px-1.5 py-0.5 rounded">
-                          {b.kode || '—'}
-                        </span>
-                        <span className="text-slate-700">{b.nama}</span>
-                        <span className="ml-2 text-xs text-slate-400">{b.satuan}</span>
-                      </button>
-                    ))
-                  )}
-                </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm text-slate-600 font-semibold">Daftar Barang</label>
+              {!editTarget && (
+                <button type="button" onClick={addItem} className="text-xs font-medium text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
+                  <Plus size={14} /> Tambah Barang
+                </button>
               )}
             </div>
-            {form.kode_barang && (
-              <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-500">
-                <span className="font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{form.kode_barang}</span>
-                <span className="truncate">{form.deskripsi}</span>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm text-slate-600 mb-1.5">Box</label>
-            <input
-              type="text"
-              value={form.box}
-              onChange={e => setForm(f => ({ ...f, box: e.target.value }))}
-              placeholder="Cth: Box A, Karton 1, dll"
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-slate-600 mb-1.5">Quantity <span className="text-red-500">*</span></label>
-            <input
-              type="number"
-              value={form.qty}
-              onChange={e => setForm(f => ({ ...f, qty: e.target.value }))}
-              placeholder="0"
-              min="1"
-              required
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
-            />
+            
+            <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-1">
+              {form.items.map((item, index) => (
+                <ItemFormRow
+                  key={index}
+                  index={index}
+                  item={item}
+                  updateItem={updateItem}
+                  removeItem={removeItem}
+                  barangList={barangList}
+                  allowRemove={!editTarget && form.items.length > 1}
+                />
+              ))}
+            </div>
           </div>
 
           <div>
@@ -546,20 +679,9 @@ export default function PreOrder() {
             </select>
             {form.keterangan_status === 'Sudah Dibongkar' && (
               <p className="mt-1.5 text-xs text-emerald-600 font-medium flex items-center gap-1">
-                <CheckCircle size={11} /> Data akan otomatis dipindahkan ke Barang Masuk
+                <CheckCircle size={11} /> Data akan otomatis dipindahkan ke Barang Masuk dan History
               </p>
             )}
-          </div>
-
-          <div>
-            <label className="block text-sm text-slate-600 mb-1.5">Catatan</label>
-            <textarea
-              value={form.catatan}
-              onChange={e => setForm(f => ({ ...f, catatan: e.target.value }))}
-              placeholder="Informasi tambahan, supplier, dst..."
-              rows={2}
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 resize-none"
-            />
           </div>
 
           <div className="flex gap-3 pt-2">
