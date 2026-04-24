@@ -97,6 +97,7 @@ export async function updateUser(id, data) {
     
     const userDoc = await getDoc(doc(db, COL, id));
     updatedUser = { id: userDoc.id, ...userDoc.data() };
+
   }
 
   if (session?.id === id) {

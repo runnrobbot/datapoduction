@@ -22,22 +22,14 @@ export async function addPreOrder(data) {
       method: 'POST',
       body: JSON.stringify({
         tanggal_po:         data.tanggal_po,
-        kode_barang:        data.kode_barang || '',
-        deskripsi:          data.deskripsi || '',
-        box:                data.box || '',
-        qty:                parseInt(data.qty) || 0,
-        catatan:            data.catatan || '',
+        items:              data.items || [],
         keterangan_status:  data.keterangan_status || '',
       }),
     });
   }
   return await addDoc(collection(db, COL), {
     tanggal_po:         data.tanggal_po,
-    kode_barang:        data.kode_barang || '',
-    deskripsi:          data.deskripsi || '',
-    box:                data.box || '',
-    qty:                parseInt(data.qty) || 0,
-    catatan:            data.catatan || '',
+    items:              data.items || [],
     keterangan_status:  data.keterangan_status || '',
     created_at:         serverTimestamp(),
   });
@@ -49,22 +41,14 @@ export async function updatePreOrder(id, data) {
       method: 'PUT',
       body: JSON.stringify({
         tanggal_po:         data.tanggal_po,
-        kode_barang:        data.kode_barang || '',
-        deskripsi:          data.deskripsi || '',
-        box:                data.box || '',
-        qty:                parseInt(data.qty) || 0,
-        catatan:            data.catatan || '',
+        items:              data.items || [],
         keterangan_status:  data.keterangan_status || '',
       }),
     });
   }
   return await updateDoc(doc(db, COL, id), {
     tanggal_po:         data.tanggal_po,
-    kode_barang:        data.kode_barang || '',
-    deskripsi:          data.deskripsi || '',
-    box:                data.box || '',
-    qty:                parseInt(data.qty) || 0,
-    catatan:            data.catatan || '',
+    items:              data.items || [],
     keterangan_status:  data.keterangan_status || '',
     updated_at:         serverTimestamp(),
   });

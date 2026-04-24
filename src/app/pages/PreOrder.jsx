@@ -4,6 +4,7 @@ import {
   RefreshCw, Clock, AlertTriangle, CheckCircle, ChevronDown, X, Truck, History
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '../context/AuthContext';
 import { getAllPreOrder, addPreOrder, updatePreOrder, deletePreOrder } from '../services/preOrderService';
 import { getAllBarang } from '../services/barangService';
 import { addMasuk } from '../services/masukService';
@@ -198,100 +199,135 @@ const statusIcon = (color) => {
   return <CheckCircle size={10} className="text-emerald-500" />;
 };
 
-function POTable({ data, loading, emptyTitle, emptyDesc, onEdit, onDelete }) {
+function POTable({ data, loading, emptyTitle, emptyDesc, onEdit, onDelete, isHistory, isSuperAdmin }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead className="bg-slate-50 border-b border-slate-200">
           <tr>
-            {['Tanggal PO', 'Kode Barang', 'Deskripsi', 'Qty', 'Status', 'Countdown', 'Aksi'].map(h => (
-              <th key={h} className="text-left px-4 py-3 text-xs text-slate-500 uppercase tracking-wider font-semibold whitespace-nowrap">{h}</th>
-            ))}
+            <th className="text-left px-4 py-3 text-xs text-slate-500 uppercase tracking-wider font-semibold whitespace-nowrap">Tanggal PO</th>
+            <th className="text-left px-4 py-3 text-xs text-slate-500 uppercase tracking-wider font-semibold whitespace-nowrap">Daftar Barang</th>
+            <th className="text-left px-4 py-3 text-xs text-slate-500 uppercase tracking-wider font-semibold whitespace-nowrap">Qty</th>
+            <th className="text-left px-4 py-3 text-xs text-slate-500 uppercase tracking-wider font-semibold whitespace-nowrap">Total Qty</th>
+            <th className="text-left px-4 py-3 text-xs text-slate-500 uppercase tracking-wider font-semibold whitespace-nowrap">Status</th>
+            {!isHistory && <th className="text-left px-4 py-3 text-xs text-slate-500 uppercase tracking-wider font-semibold whitespace-nowrap">Countdown</th>}
+            {(!isHistory || isSuperAdmin) && <th className="text-left px-4 py-3 text-xs text-slate-500 uppercase tracking-wider font-semibold whitespace-nowrap">Aksi</th>}
           </tr>
         </thead>
-        <tbody>
-          {loading ? (
-            <tr><td colSpan={7} className="px-4"><LoadingTable cols={7} rows={3} /></td></tr>
-          ) : data.length === 0 ? (
+        {loading ? (
+          <tbody><tr><td colSpan={7} className="px-4"><LoadingTable cols={7} rows={3} /></td></tr></tbody>
+        ) : data.length === 0 ? (
+          <tbody>
             <tr>
               <td colSpan={7}>
-                <EmptyState
-                  icon={ClipboardList}
-                  title={emptyTitle}
-                  description={emptyDesc}
-                />
+                <EmptyState icon={ClipboardList} title={emptyTitle} description={emptyDesc} />
               </td>
             </tr>
-          ) : (
-            data.map(po => (
-              <tr key={po.id} className={`border-b border-slate-50 hover:bg-slate-50 transition-colors ${
-                po.status.color === 'red' ? 'border-l-2 border-l-red-400' :
-                po.status.color === 'yellow' ? 'border-l-2 border-l-amber-400' : ''
-              }`}>
-                <td className="px-4 py-3">
-                  <p className="text-xs text-slate-700 font-medium whitespace-nowrap">{po.tanggal_po}</p>
-                  <p className="text-xs text-slate-400">{formatDate(po.created_at)}</p>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
-                    {po.kode_barang || '—'}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <p className="text-sm text-slate-800 font-medium max-w-[180px] truncate">{po.deskripsi}</p>
-                  {po.catatan && <p className="text-xs text-slate-400 truncate max-w-[180px]">{po.catatan}</p>}
-                </td>
-                <td className="px-4 py-3">
-                  <span className="text-sm font-bold text-slate-700">{po.qty}</span>
-                </td>
-                <td className="px-4 py-3">
-                  {po.keterangan_status ? (
-                    <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold ${KET_STATUS_STYLE[po.keterangan_status] || 'bg-slate-50 text-slate-500 border border-slate-200'}`}>
-                      <Truck size={10} />
-                      {po.keterangan_status}
-                    </span>
-                  ) : (
-                    <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold ${statusBadgeClass(po.status.color)}`}>
-                      {statusIcon(po.status.color)}
-                      {po.status.label}
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  <p className={`text-sm font-semibold ${
-                    po.status.color === 'red' ? 'text-red-600' :
-                    po.status.color === 'yellow' ? 'text-amber-600' :
-                    'text-emerald-600'
-                  }`}>
-                    {po.status.message}
-                  </p>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => onEdit(po)}
-                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100"
-                    >
-                      <Edit2 size={11} /> Edit
-                    </button>
-                    <button
-                      onClick={() => onDelete(po)}
-                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg border border-red-100 text-red-500 hover:bg-red-50"
-                    >
-                      <Trash2 size={11} /> Hapus
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
+          </tbody>
+        ) : (
+          data.map(po => {
+            const items = po.items && po.items.length > 0 ? po.items : [{}];
+            const totalQty = items.reduce((sum, item) => sum + parseInt(item.qty || 0), 0);
+            return (
+              <tbody key={po.id} className="group border-b-4 border-slate-100 hover:bg-slate-50/50 transition-colors">
+                {items.map((item, idx) => (
+                  <tr key={idx} className={
+                    po.status.color === 'red' ? 'border-l-2 border-l-red-400' :
+                    po.status.color === 'yellow' ? 'border-l-2 border-l-amber-400' : ''
+                  }>
+                    {idx === 0 && (
+                      <td className="px-4 py-3 align-top border-r border-slate-100/50" rowSpan={items.length}>
+                        <p className="text-xs text-slate-700 font-medium whitespace-nowrap">{po.tanggal_po}</p>
+                        <p className="text-xs text-slate-400">{formatDate(po.created_at)}</p>
+                      </td>
+                    )}
+                    <td className={`px-4 py-3 align-top ${idx !== items.length - 1 ? 'border-b border-slate-100' : ''}`}>
+                      <div className="flex gap-3 text-sm">
+                        <div className="min-w-[60px]">
+                          <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
+                            {item.kode_barang || '—'}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-slate-800 font-medium">{item.deskripsi || '—'}</p>
+                          {(item.box || item.catatan) && (
+                            <p className="text-xs text-slate-400 mt-0.5">
+                              {item.box && `Box: ${item.box} `}
+                              {item.catatan && `• Catatan: ${item.catatan}`}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className={`px-4 py-3 align-top font-bold text-slate-700 whitespace-nowrap border-r border-slate-100/50 ${idx !== items.length - 1 ? 'border-b border-slate-100' : ''}`}>
+                      {item.qty || 0} <span className="text-xs font-medium text-slate-500">pcs</span>
+                    </td>
+                    {idx === 0 && (
+                      <td className="px-4 py-3 align-top" rowSpan={items.length}>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-sm font-bold text-slate-700">{totalQty}</span>
+                          <span className="text-xs font-medium text-slate-500">pcs</span>
+                        </div>
+                      </td>
+                    )}
+                    {idx === 0 && (
+                      <td className="px-4 py-3 align-top" rowSpan={items.length}>
+                        {po.keterangan_status ? (
+                          <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold ${KET_STATUS_STYLE[po.keterangan_status] || 'bg-slate-50 text-slate-500 border border-slate-200'}`}>
+                            <Truck size={10} />
+                            {po.keterangan_status}
+                          </span>
+                        ) : (
+                          <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold ${statusBadgeClass(po.status.color)}`}>
+                            {statusIcon(po.status.color)}
+                            {po.status.label}
+                          </span>
+                        )}
+                      </td>
+                    )}
+                    {idx === 0 && !isHistory && (
+                      <td className="px-4 py-3 align-top" rowSpan={items.length}>
+                        <p className={`text-sm font-semibold ${
+                          po.status.color === 'red' ? 'text-red-600' :
+                          po.status.color === 'yellow' ? 'text-amber-600' :
+                          'text-emerald-600'
+                        }`}>
+                          {po.status.message}
+                        </p>
+                      </td>
+                    )}
+                    {idx === 0 && (!isHistory || isSuperAdmin) && (
+                      <td className="px-4 py-3 align-top" rowSpan={items.length}>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => onEdit(po)}
+                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100"
+                          >
+                            <Edit2 size={11} /> Edit
+                          </button>
+                          <button
+                            onClick={() => onDelete(po)}
+                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg border border-red-100 text-red-500 hover:bg-red-50"
+                          >
+                            <Trash2 size={11} /> Hapus
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            );
+          })
+        )}
       </table>
     </div>
   );
 }
 
 export default function PreOrder() {
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === 'super_admin';
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -331,8 +367,10 @@ export default function PreOrder() {
     const q = search.toLowerCase();
     return enriched.filter(po => {
       const matchSearch = !q ||
-        po.kode_barang?.toLowerCase().includes(q) ||
-        po.deskripsi?.toLowerCase().includes(q);
+        po.items?.some(item => 
+          item.kode_barang?.toLowerCase().includes(q) ||
+          item.deskripsi?.toLowerCase().includes(q)
+        );
       
       const currentStatus = po.keterangan_status || po.status.label;
       const matchStatus = statusFilter === 'all' || currentStatus === statusFilter;
@@ -376,13 +414,7 @@ export default function PreOrder() {
     setForm({
       tanggal_po: item.tanggal_po || '',
       keterangan_status: item.keterangan_status || '',
-      items: [{
-        kode_barang: item.kode_barang || '',
-        deskripsi: item.deskripsi || '',
-        box: item.box || '',
-        qty: item.qty?.toString() || '',
-        catatan: item.catatan || ''
-      }]
+      items: item.items && item.items.length > 0 ? item.items : [{ ...INITIAL_ITEM }]
     });
     setEditTarget(item);
     setModalOpen(true);
@@ -419,47 +451,15 @@ export default function PreOrder() {
 
     setSaving(true);
     try {
-      if (editTarget) {
-        const item = form.items[0];
-        const dataToSave = {
-          tanggal_po: form.tanggal_po,
-          keterangan_status: form.keterangan_status,
-          kode_barang: item.kode_barang,
-          deskripsi: item.deskripsi,
-          box: item.box,
-          qty: item.qty,
-          catatan: item.catatan,
-        };
+      const dataToSave = {
+        tanggal_po: form.tanggal_po,
+        keterangan_status: form.keterangan_status,
+        items: form.items
+      };
 
+      if (editTarget) {
         if (form.keterangan_status === 'Sudah Dibongkar') {
-          const barang = barangList.find(b => b.kode === item.kode_barang || b.nama === item.deskripsi);
-          await addMasuk({
-            barang_id:   barang?.id || '',
-            kode_barang: item.kode_barang || '',
-            nama_barang: item.deskripsi,
-            satuan:      barang?.satuan || 'pcs',
-            qty:         parseInt(item.qty),
-            keterangan:  `Dari PO: ${item.catatan || item.deskripsi}`.trim(),
-          });
-          await updatePreOrder(editTarget.id, dataToSave);
-          toast.success(`PO dipindahkan ke Barang Masuk dan status diperbarui`);
-        } else {
-          await updatePreOrder(editTarget.id, dataToSave);
-          toast.success('Pre Order berhasil diperbarui');
-        }
-      } else {
-        for (const item of form.items) {
-          const dataToSave = {
-            tanggal_po: form.tanggal_po,
-            keterangan_status: form.keterangan_status,
-            kode_barang: item.kode_barang,
-            deskripsi: item.deskripsi,
-            box: item.box,
-            qty: item.qty,
-            catatan: item.catatan,
-          };
-          
-          if (form.keterangan_status === 'Sudah Dibongkar') {
+          for (const item of form.items) {
             const barang = barangList.find(b => b.kode === item.kode_barang || b.nama === item.deskripsi);
             await addMasuk({
               barang_id:   barang?.id || '',
@@ -470,8 +470,24 @@ export default function PreOrder() {
               keterangan:  `Dari PO: ${item.catatan || item.deskripsi}`.trim(),
             });
           }
-          await addPreOrder(dataToSave);
         }
+        await updatePreOrder(editTarget.id, dataToSave);
+        toast.success(`Pre Order berhasil diperbarui`);
+      } else {
+        if (form.keterangan_status === 'Sudah Dibongkar') {
+          for (const item of form.items) {
+            const barang = barangList.find(b => b.kode === item.kode_barang || b.nama === item.deskripsi);
+            await addMasuk({
+              barang_id:   barang?.id || '',
+              kode_barang: item.kode_barang || '',
+              nama_barang: item.deskripsi,
+              satuan:      barang?.satuan || 'pcs',
+              qty:         parseInt(item.qty),
+              keterangan:  `Dari PO: ${item.catatan || item.deskripsi}`.trim(),
+            });
+          }
+        }
+        await addPreOrder(dataToSave);
         toast.success('Pre Order berhasil ditambahkan');
       }
       setModalOpen(false);
@@ -570,6 +586,8 @@ export default function PreOrder() {
           emptyDesc="Data Pre Order aktif akan muncul di sini"
           onEdit={openEdit}
           onDelete={setDeleteTarget}
+          isHistory={false}
+          isSuperAdmin={isSuperAdmin}
         />
       </div>
 
@@ -612,6 +630,8 @@ export default function PreOrder() {
           emptyDesc="PO yang sudah dibongkar akan masuk ke sini"
           onEdit={openEdit}
           onDelete={setDeleteTarget}
+          isHistory={true}
+          isSuperAdmin={isSuperAdmin}
         />
       </div>
 
@@ -659,7 +679,7 @@ export default function PreOrder() {
                   updateItem={updateItem}
                   removeItem={removeItem}
                   barangList={barangList}
-                  allowRemove={!editTarget && form.items.length > 1}
+                  allowRemove={form.items.length > 1}
                 />
               ))}
             </div>
@@ -701,7 +721,7 @@ export default function PreOrder() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
         title="Hapus Pre Order"
-        message={`Hapus PO "${deleteTarget?.deskripsi}" (${deleteTarget?.kode_barang || '—'})? Tindakan ini tidak dapat dibatalkan.`}
+        message={`Hapus PO tanggal ${deleteTarget?.tanggal_po} dengan ${deleteTarget?.items?.length || 0} barang? Tindakan ini tidak dapat dibatalkan.`}
         confirmLabel="Hapus PO"
       />
     </div>
