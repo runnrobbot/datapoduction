@@ -24,8 +24,13 @@ export default function ManageUser() {
   const [showPass, setShowPass] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  function load() {
-    setList(getAllUsers());
+  async function load() {
+    try {
+      const data = await getAllUsers();
+      setList(data);
+    } catch (err) {
+      toast.error('Gagal mengambil data user');
+    }
   }
 
   useEffect(() => { load(); }, []);
@@ -44,7 +49,7 @@ export default function ManageUser() {
     setModalOpen(true);
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     if (!form.nama.trim())     { toast.error('Nama wajib diisi'); return; }
     if (!form.username.trim()) { toast.error('Username wajib diisi'); return; }
@@ -53,7 +58,7 @@ export default function ManageUser() {
     setSaving(true);
     try {
       if (editTarget) {
-        updateUser(editTarget.id, {
+        await updateUser(editTarget.id, {
           nama: form.nama,
           username: form.username,
           role: form.role,
@@ -61,7 +66,7 @@ export default function ManageUser() {
         });
         toast.success('User berhasil diperbarui');
       } else {
-        addUser(form);
+        await addUser(form);
         toast.success('User berhasil ditambahkan');
       }
       setModalOpen(false);
@@ -73,9 +78,9 @@ export default function ManageUser() {
     }
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     try {
-      deleteUser(deleteTarget.id);
+      await deleteUser(deleteTarget.id);
       toast.success('User dihapus');
       setDeleteTarget(null);
       load();

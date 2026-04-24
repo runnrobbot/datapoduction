@@ -12,8 +12,8 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  function login(username, password) {
-    const u = authLogin(username, password);
+  async function login(username, password) {
+    const u = await authLogin(username, password);
     setUser(u);
     return u;
   }

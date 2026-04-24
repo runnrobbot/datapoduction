@@ -1,39 +1,30 @@
-const USERS_KEY  = 'dp_users';
+import { USE_FIREBASE, apiFetch } from './db.js';
+import { db } from './firebase.js';
+import {
+  collection, doc, getDocs, addDoc, updateDoc, deleteDoc,
+  query, orderBy, serverTimestamp, getDoc, where
+} from 'firebase/firestore';
+
 const SESSION_KEY = 'dp_session';
+const COL = 'users';
 
-function seedUsers() {
-  if (!localStorage.getItem(USERS_KEY)) {
-    const defaults = [
-      {
-        id: 'u-1',
-        username: 'superadmin',
-        password: 'admin123',
-        nama: 'Super Administrator',
-        role: 'super_admin',
-        created_at: new Date().toISOString(),
-      },
-    ];
-    localStorage.setItem(USERS_KEY, JSON.stringify(defaults));
+export async function login(username, password) {
+  if (!USE_FIREBASE) {
+    const res = await apiFetch('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password })
+    });
+    localStorage.setItem(SESSION_KEY, JSON.stringify(res));
+    return res;
   }
-}
-
-function getUsers() {
-  seedUsers();
-  return JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
-}
-
-function saveUsers(users) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
-
-export function login(username, password) {
-  const users = getUsers();
-  const user = users.find(
-    u => u.username === username && u.password === password
-  );
-  if (!user) throw new Error('Username atau password salah');
-  const session = { ...user };
-  delete session.password;
+  
+  // Firebase login logic
+  const q = query(collection(db, COL), where("username", "==", username), where("password", "==", password));
+  const snap = await getDocs(q);
+  if (snap.empty) throw new Error('Username atau password salah');
+  
+  const userDoc = snap.docs[0];
+  const session = { id: userDoc.id, ...userDoc.data() };
   localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   return session;
 }
@@ -52,63 +43,82 @@ export function isSuperAdmin() {
   return u?.role === 'super_admin';
 }
 
-export function getAllUsers() {
-  return getUsers().map(u => {
-    const { password, ...safe } = u;
-    return safe;
-  });
+export async function getAllUsers() {
+  if (!USE_FIREBASE) {
+    return await apiFetch('/users');
+  }
+  const q = query(collection(db, COL), orderBy('created_at', 'desc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-export function addUser(data) {
-  const users = getUsers();
-  if (users.find(u => u.username === data.username)) {
-    throw new Error('Username sudah dipakai');
+export async function addUser(data) {
+  if (!USE_FIREBASE) {
+    return await apiFetch('/users', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
   }
-  const newUser = {
-    id: `u-${Date.now()}`,
+  
+  // Firebase add logic
+  const checkQ = query(collection(db, COL), where("username", "==", data.username));
+  const checkSnap = await getDocs(checkQ);
+  if (!checkSnap.empty) throw new Error('Username sudah dipakai');
+  
+  return await addDoc(collection(db, COL), {
     username: data.username.trim(),
     password: data.password,
     nama: data.nama.trim(),
     role: data.role || 'admin',
-    created_at: new Date().toISOString(),
-  };
-  saveUsers([...users, newUser]);
-  return newUser;
+    created_at: serverTimestamp(),
+  });
 }
 
-export function updateUser(id, data) {
-  const users = getUsers();
-  const idx = users.findIndex(u => u.id === id);
-  if (idx === -1) throw new Error('User tidak ditemukan');
-
+export async function updateUser(id, data) {
   const session = getCurrentUser();
-  if (session?.id === id && data.role && data.role !== users[idx].role) {
+  if (session?.id === id && data.role && data.role !== session.role) {
     throw new Error('Tidak bisa mengubah role sendiri');
   }
 
-  if (data.username && users.some(u => u.username === data.username && u.id !== id)) {
-    throw new Error('Username sudah dipakai');
+  let updatedUser = null;
+
+  if (!USE_FIREBASE) {
+    updatedUser = await apiFetch(`/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  } else {
+    // Firebase update logic
+    if (data.username) {
+      const checkQ = query(collection(db, COL), where("username", "==", data.username));
+      const checkSnap = await getDocs(checkQ);
+      if (!checkSnap.empty && checkSnap.docs[0].id !== id) throw new Error('Username sudah dipakai');
+    }
+
+    const updateData = { ...data, updated_at: serverTimestamp() };
+    await updateDoc(doc(db, COL, id), updateData);
+    
+    // Fetch updated
+    const userDoc = await getDoc(doc(db, COL, id));
+    updatedUser = { id: userDoc.id, ...userDoc.data() };
   }
 
-  users[idx] = {
-    ...users[idx],
-    ...(data.nama     ? { nama: data.nama.trim() }         : {}),
-    ...(data.username ? { username: data.username.trim() } : {}),
-    ...(data.password ? { password: data.password }        : {}),
-    ...(data.role     ? { role: data.role }                : {}),
-  };
-  saveUsers(users);
-
+  // Update session if it's the current user
   if (session?.id === id) {
-    const { password, ...safe } = users[idx];
+    const { password, ...safe } = updatedUser;
     localStorage.setItem(SESSION_KEY, JSON.stringify(safe));
   }
-  return users[idx];
+  
+  return updatedUser;
 }
 
-export function deleteUser(id) {
+export async function deleteUser(id) {
   const session = getCurrentUser();
   if (session?.id === id) throw new Error('Tidak bisa menghapus akun sendiri');
-  const users = getUsers();
-  saveUsers(users.filter(u => u.id !== id));
+  
+  if (!USE_FIREBASE) {
+    return await apiFetch(`/users/${id}`, { method: 'DELETE' });
+  }
+  
+  return await deleteDoc(doc(db, COL, id));
 }
