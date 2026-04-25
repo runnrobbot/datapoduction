@@ -14,7 +14,6 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { LoadingTable } from '../components/LoadingTable';
 import { SearchDropdown } from '../components/SearchDropdown';
-import { AnimatedCard } from '../components/motionComponents';
 import { formatDate } from '../utils/helpers';
 
 const PAGE_SIZE = 50;

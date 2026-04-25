@@ -54,7 +54,6 @@ export async function updateBongkaran(id, data) {
   });
 }
 
-// SELESAIKAN → Sudah Dibongkar + insert barang_masuk per item
 export async function selesaikanBongkaran(bongkaranId, bongkaranData) {
   if (!USE_FIREBASE) {
     return await apiFetch('/bongkaran/' + bongkaranId + '/selesai', {
@@ -65,22 +64,27 @@ export async function selesaikanBongkaran(bongkaranId, bongkaranData) {
   await runTransaction(db, async (transaction) => {
     const bongkaranRef = doc(db, BONGKAR_COL, bongkaranId);
     for (const item of (bongkaranData.items ?? [])) {
-      if (!item.barang_id || !item.qty || parseInt(item.qty) <= 0) continue;
+      // Gunakan qty_datang (hasil revisi) sebagai qty yang masuk ke stok
+      // Fallback ke qty jika qty_datang belum diisi
+      const qtyMasuk = parseInt(item.qty_datang ?? item.qty ?? 0);
+      if (!item.barang_id || qtyMasuk <= 0) continue;
+
       const barangRef  = doc(db, BARANG_COL, item.barang_id);
       const barangSnap = await transaction.get(barangRef);
       const currentStok = barangSnap.exists() ? (barangSnap.data().stok || 0) : 0;
+
       const masukRef = doc(collection(db, MASUK_COL));
       transaction.set(masukRef, {
         barang_id:   item.barang_id,
         kode_barang: item.kode_barang || '',
         nama_barang: item.deskripsi   || '',
         satuan:      item.satuan      || 'pcs',
-        qty:         parseInt(item.qty),
+        qty:         qtyMasuk,
         keterangan:  item.catatan     || ('Dari Bongkaran PO ' + bongkaranData.tanggal_po),
         created_at:  serverTimestamp(),
       });
       if (barangSnap.exists()) {
-        transaction.update(barangRef, { stok: currentStok + parseInt(item.qty) });
+        transaction.update(barangRef, { stok: currentStok + qtyMasuk });
       }
     }
     transaction.update(bongkaranRef, {

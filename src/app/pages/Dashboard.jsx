@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 import { Link } from 'react-router';
 import { motion } from 'framer-motion';
 import {
@@ -9,15 +9,128 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer,
   XAxis, YAxis, Tooltip, Legend
 } from 'recharts';
+import { Chart, ArcElement, DoughnutController, Tooltip as ChartTooltip, Legend as ChartLegend } from 'chart.js';
 import { getAllBarang } from '../services/barangService';
 import { getAllPenjualan } from '../services/penjualanService';
 import { getAllPreOrder } from '../services/preOrderService';
 import { getAllMasuk } from '../services/masukService';
 import { subscribeBarang, subscribePenjualan, subscribePreOrder, subscribeBarangMasuk } from '../services/realtimeService';
 import { StatCard } from '../components/StatCard';
-import { AnimatedCard, StaggerList, StaggerItem } from '../components/motionComponents';
+import { AnimatedCard } from '../components/motionComponents';
 import { useRealtimeFirestore } from '../hooks/useRealtime';
-import { getPOStatus, formatCurrency, formatDate, toDate } from '../utils/helpers';
+import { getPOStatus, formatCurrency, formatDate } from '../utils/helpers';
+
+Chart.register(ArcElement, DoughnutController, ChartTooltip, ChartLegend);
+
+/* ─── Reusable Doughnut (Chart.js canvas) ─────────────── */
+const PALETTE = [
+  '#059669','#3b82f6','#8b5cf6','#f59e0b','#ef4444',
+  '#06b6d4','#ec4899','#84cc16','#f97316','#6366f1',
+];
+
+function DoughnutChart({ data, title, subtitle, loading, centerLabel }) {
+  const canvasRef = useRef(null);
+  const chartRef  = useRef(null);
+
+  useEffect(() => {
+    if (!canvasRef.current || loading) return;
+
+    // Destroy previous instance
+    if (chartRef.current) {
+      chartRef.current.destroy();
+      chartRef.current = null;
+    }
+
+    const total = data.reduce((s, d) => s + d.value, 0);
+    if (total === 0) return;
+
+    chartRef.current = new Chart(canvasRef.current, {
+      type: 'doughnut',
+      data: {
+        labels: data.map(d => d.label),
+        datasets: [{
+          data:            data.map(d => d.value),
+          backgroundColor: data.map((_, i) => PALETTE[i % PALETTE.length]),
+          borderColor:     '#ffffff',
+          borderWidth:     3,
+          hoverBorderWidth: 3,
+          hoverOffset:     6,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '68%',
+        animation: { animateRotate: true, duration: 700, easing: 'easeInOutQuart' },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 8, boxHeight: 8, borderRadius: 4,
+              padding: 12,
+              font: { size: 11, family: "'Inter', system-ui, sans-serif" },
+              color: '#64748b',
+            },
+          },
+          tooltip: {
+            backgroundColor: '#fff',
+            titleColor: '#0f172a',
+            bodyColor: '#475569',
+            borderColor: '#e2e8f0',
+            borderWidth: 1,
+            padding: 10,
+            cornerRadius: 10,
+            boxShadow: '0 4px 6px rgba(0,0,0,.06)',
+            callbacks: {
+              label: (ctx) => {
+                const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                return `  ${ctx.label}: ${ctx.parsed.toLocaleString()} (${pct}%)`;
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return () => {
+      if (chartRef.current) {
+        chartRef.current.destroy();
+        chartRef.current = null;
+      }
+    };
+  }, [data, loading]);
+
+  const total = data.reduce((s, d) => s + d.value, 0);
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 p-5 flex flex-col">
+      <div className="mb-4">
+        <h3 className="text-slate-800 font-semibold text-[0.95rem]">{title}</h3>
+        <p className="text-slate-400 text-xs mt-0.5">{subtitle}</p>
+      </div>
+      {loading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-36 h-36 rounded-full bg-slate-100 animate-pulse" />
+        </div>
+      ) : total === 0 ? (
+        <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">
+          Belum ada data
+        </div>
+      ) : (
+        <div className="relative flex-1" style={{ minHeight: 220 }}>
+          <canvas ref={canvasRef} />
+          {/* Center label */}
+          {centerLabel && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ top: '-18%' }}>
+              <p className="text-2xl font-bold text-slate-800">{total.toLocaleString()}</p>
+              <p className="text-xs text-slate-400">{centerLabel}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const COLORS = ['#059669', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
 
@@ -85,6 +198,51 @@ export default function Dashboard() {
 
   const recentSales = penjualanList.slice(0, 10);
   const lowStok = barangList.filter(b => b.stok <= 5 && b.stok >= 0).slice(0, 5);
+
+  // ── Pie chart data ─────────────────────────────────────
+
+  // 1. Top 6 barang berdasarkan stok
+  const stokDistData = useMemo(() => {
+    return [...barangList]
+      .filter(b => (parseInt(b.stok) || 0) > 0)
+      .sort((a, b) => (parseInt(b.stok) || 0) - (parseInt(a.stok) || 0))
+      .slice(0, 6)
+      .map(b => ({
+        label: b.kode || b.nama?.slice(0, 12) || '?',
+        value: parseInt(b.stok) || 0,
+      }));
+  }, [barangList]);
+
+  // 2. Status Pre Order breakdown
+  const poStatusData = useMemo(() => {
+    const counts = { 'Masih Dijalan': 0, 'Sudah Tiba': 0, 'Sudah Dibongkar': 0, 'Overdue': 0, 'Aktif': 0 };
+    preOrderList.forEach(po => {
+      const ket = po.keterangan_status;
+      if (ket === 'Sudah Tiba')     { counts['Sudah Tiba']++;     return; }
+      if (ket === 'Sudah Dibongkar'){ counts['Sudah Dibongkar']++; return; }
+      if (ket === 'Masih Dijalan')  { counts['Masih Dijalan']++;   return; }
+      const { label } = getPOStatus(po.tanggal_po);
+      if (label === 'Overdue') counts['Overdue']++;
+      else counts['Aktif']++;
+    });
+    return Object.entries(counts)
+      .filter(([, v]) => v > 0)
+      .map(([label, value]) => ({ label, value }));
+  }, [preOrderList]);
+
+  // 3. Top 6 produk terjual (pie)
+  const topSalesPieData = useMemo(() => {
+    const map = {};
+    penjualanList.forEach(p => {
+      const key = p.kode_barang || p.nama_barang;
+      if (!key) return;
+      map[key] = (map[key] || 0) + (parseInt(p.qty) || 0);
+    });
+    return Object.entries(map)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 6)
+      .map(([label, value]) => ({ label, value }));
+  }, [penjualanList]);
 
   // PO Mendesak: hanya yang belum Sudah Tiba / Sudah Dibongkar, dan status tanggal red/yellow
   const urgentPO = preOrderList
@@ -169,6 +327,31 @@ export default function Dashboard() {
             </ResponsiveContainer>
           )}
         </div>
+      </div>
+
+      {/* ── 3 Doughnut Pie Charts (Chart.js) ───────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <DoughnutChart
+          title="Distribusi Stok"
+          subtitle="Top 6 barang berdasarkan stok tersedia"
+          data={stokDistData}
+          loading={loading}
+          centerLabel="unit"
+        />
+        <DoughnutChart
+          title="Status Pre Order"
+          subtitle="Breakdown status semua PO"
+          data={poStatusData}
+          loading={loading}
+          centerLabel="PO"
+        />
+        <DoughnutChart
+          title="Top Produk Terjual"
+          subtitle="Top 6 produk berdasarkan unit terjual"
+          data={topSalesPieData}
+          loading={loading}
+          centerLabel="unit"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

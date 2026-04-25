@@ -26,32 +26,65 @@ const STATUS_STYLE = {
 function ItemRevisiRow({ item, index, onChange }) {
   const [editing, setEditing] = useState(false);
 
+  const hasQtyDatang = item.qty_datang !== undefined && item.qty_datang !== '';
+
   return (
-    <div className="border border-slate-100 rounded-xl overflow-hidden">
-      {/* Preview row — always visible */}
+    <div className={`border rounded-xl overflow-hidden transition-colors ${editing ? 'border-emerald-200' : 'border-slate-100'}`}>
+
+      {/* ── Preview row — always visible ─────────────────── */}
       <div className="flex items-start gap-3 px-4 py-3 bg-white">
-        {/* Barang info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
+          {/* Nama & kode */}
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
               {item.kode_barang || '—'}
             </span>
             <span className="text-sm font-semibold text-slate-800">{item.deskripsi || '—'}</span>
           </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-            <span><span className="font-medium text-slate-400">Box</span> {item.box || <em className="text-slate-300">—</em>}</span>
-            <span><span className="font-medium text-slate-400">Isi</span> {item.isi || <em className="text-slate-300">—</em>}</span>
-            <span><span className="font-medium text-slate-400">Qty</span> <strong className="text-slate-700">{item.qty || 0}</strong> pcs</span>
-            {item.catatan && <span><span className="font-medium text-slate-400">Ket.</span> {item.catatan}</span>}
+
+          {/* Data PO asli — read-only chips */}
+          <div className="flex flex-wrap gap-2 mb-2">
+            {[
+              { label: 'Box', value: item.box },
+              { label: 'Isi', value: item.isi },
+              { label: 'Qty PO', value: item.qty ? `${item.qty} pcs` : null },
+            ].map(({ label, value }) => (
+              <span key={label} className="inline-flex items-center gap-1 bg-slate-50 border border-slate-100 rounded-md px-2 py-0.5 text-xs">
+                <span className="text-slate-400 font-medium">{label}</span>
+                <span className="text-slate-600 font-semibold">{value || <em className="text-slate-300 not-italic">—</em>}</span>
+              </span>
+            ))}
+          </div>
+
+          {/* Qty Datang result — shown when filled */}
+          <div className="flex flex-wrap gap-2">
+            <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs border ${
+              hasQtyDatang
+                ? 'bg-emerald-50 border-emerald-100'
+                : 'bg-amber-50 border-amber-100'
+            }`}>
+              <span className="font-medium text-slate-400">Qty Datang</span>
+              {hasQtyDatang
+                ? <strong className="text-emerald-700">{item.qty_datang} pcs</strong>
+                : <em className="text-amber-500 not-italic font-medium">Belum diisi</em>
+              }
+            </span>
+            {item.catatan && (
+              <span className="inline-flex items-center gap-1 bg-slate-50 border border-slate-100 rounded-md px-2 py-0.5 text-xs">
+                <span className="text-slate-400 font-medium">Ket.</span>
+                <span className="text-slate-600">{item.catatan}</span>
+              </span>
+            )}
           </div>
         </div>
-        {/* Edit toggle button */}
+
+        {/* Edit toggle */}
         <button
           type="button"
           onClick={() => setEditing(e => !e)}
-          className={`shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+          className={`shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
             editing
-              ? 'bg-slate-100 border-slate-200 text-slate-600'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
               : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 hover:border-emerald-200'
           }`}
         >
@@ -60,55 +93,62 @@ function ItemRevisiRow({ item, index, onChange }) {
         </button>
       </div>
 
-      {/* Inline edit fields — only when editing */}
+      {/* ── Edit panel — hanya Qty Datang & Keterangan ───── */}
       {editing && (
         <motion.div
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="border-t border-slate-100 bg-slate-50 px-4 py-3 grid grid-cols-2 sm:grid-cols-4 gap-3"
+          className="border-t border-emerald-100 bg-emerald-50/40 px-4 py-4"
         >
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Box</label>
-            <input
-              type="text"
-              value={item.box || ''}
-              onChange={e => onChange(index, { box: e.target.value })}
-              placeholder="Cth: AA"
-              className="w-full px-2.5 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
-            />
+          {/* Read-only reference row */}
+          <div className="flex flex-wrap gap-4 mb-4 pb-3 border-b border-emerald-100">
+            <p className="w-full text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Data dari PO (tidak dapat diubah)</p>
+            {[
+              { label: 'Box',    value: item.box  || '—' },
+              { label: 'Isi',    value: item.isi   || '—' },
+              { label: 'Qty PO', value: item.qty ? `${item.qty} pcs` : '—' },
+            ].map(({ label, value }) => (
+              <div key={label}>
+                <p className="text-[11px] text-slate-400 mb-0.5">{label}</p>
+                <p className="text-sm font-semibold text-slate-600 bg-white border border-slate-100 rounded-lg px-2.5 py-1.5 min-w-[60px]">
+                  {value}
+                </p>
+              </div>
+            ))}
           </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Isi</label>
-            <input
-              type="text"
-              value={item.isi || ''}
-              onChange={e => onChange(index, { isi: e.target.value })}
-              placeholder="Cth: 10 pcs"
-              className="w-full px-2.5 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Qty <span className="text-red-400">*</span></label>
-            <input
-              type="number"
-              value={item.qty || ''}
-              onChange={e => onChange(index, { qty: e.target.value })}
-              placeholder="0"
-              min="0"
-              className="w-full px-2.5 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Keterangan</label>
-            <input
-              type="text"
-              value={item.catatan || ''}
-              onChange={e => onChange(index, { catatan: e.target.value })}
-              placeholder="Opsional"
-              className="w-full px-2.5 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
-            />
+
+          {/* Editable fields */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                Qty Datang <span className="text-red-400">*</span>
+                <span className="ml-1 font-normal text-slate-400">(yang masuk ke stok)</span>
+              </label>
+              <input
+                type="number"
+                value={item.qty_datang ?? ''}
+                onChange={e => onChange(index, { qty_datang: e.target.value })}
+                placeholder="Masukkan jumlah yang datang"
+                min="0"
+                autoFocus={editing}
+                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 font-semibold"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                Keterangan
+                <span className="ml-1 font-normal text-slate-400">(opsional)</span>
+              </label>
+              <input
+                type="text"
+                value={item.catatan || ''}
+                onChange={e => onChange(index, { catatan: e.target.value })}
+                placeholder="Cth: kondisi barang, catatan"
+                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+              />
+            </div>
           </div>
         </motion.div>
       )}
@@ -170,23 +210,35 @@ function BongkaranCard({ bongkaran, onRevisi, onSelesai, onDelete, isSuperAdmin 
         <div className="px-4 pb-4">
           <div className="border border-slate-100 rounded-lg overflow-hidden">
             <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-slate-50 border-b border-slate-100">
-              <span className="col-span-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Barang</span>
-              <span className="col-span-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Box</span>
-              <span className="col-span-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Isi</span>
-              <span className="col-span-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Qty</span>
-              <span className="col-span-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Keterangan</span>
+              <span className="col-span-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Barang</span>
+              <span className="col-span-1 text-xs font-semibold text-slate-400 uppercase tracking-wider">Box</span>
+              <span className="col-span-1 text-xs font-semibold text-slate-400 uppercase tracking-wider">Isi</span>
+              <span className="col-span-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Qty PO</span>
+              <span className="col-span-2 text-xs font-semibold text-emerald-600 uppercase tracking-wider">Qty Datang</span>
+              <span className="col-span-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Keterangan</span>
             </div>
             <div className="px-3">
               {(bongkaran.items || []).map((item, i) => (
-                <div key={i} className="grid grid-cols-12 gap-2 py-2.5 border-b border-slate-50 last:border-0">
-                  <div className="col-span-4">
+                <div key={i} className="grid grid-cols-12 gap-2 py-2.5 border-b border-slate-50 last:border-0 items-center">
+                  <div className="col-span-3">
                     <p className="text-xs font-mono font-bold text-emerald-600">{item.kode_barang || '—'}</p>
                     <p className="text-sm text-slate-700 truncate">{item.deskripsi || '—'}</p>
                   </div>
-                  <div className="col-span-2 text-sm text-slate-600">{item.box || '—'}</div>
-                  <div className="col-span-2 text-sm text-slate-600">{item.isi || '—'}</div>
-                  <div className="col-span-2 text-sm font-bold text-slate-700">{item.qty || 0} <span className="text-xs font-normal text-slate-400">pcs</span></div>
-                  <div className="col-span-2 text-sm text-slate-500 truncate">{item.catatan || '—'}</div>
+                  <div className="col-span-1 text-sm text-slate-600">{item.box || '—'}</div>
+                  <div className="col-span-1 text-sm text-slate-600">{item.isi || '—'}</div>
+                  <div className="col-span-2 text-sm text-slate-500">
+                    {item.qty || 0} <span className="text-xs text-slate-400">pcs</span>
+                  </div>
+                  <div className="col-span-2">
+                    {item.qty_datang !== undefined && item.qty_datang !== '' ? (
+                      <span className="text-sm font-bold text-emerald-700">
+                        {item.qty_datang} <span className="text-xs font-normal text-emerald-400">pcs</span>
+                      </span>
+                    ) : (
+                      <span className="text-xs text-amber-500 font-medium">Belum diisi</span>
+                    )}
+                  </div>
+                  <div className="col-span-3 text-sm text-slate-500 truncate">{item.catatan || '—'}</div>
                 </div>
               ))}
             </div>
