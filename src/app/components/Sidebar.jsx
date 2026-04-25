@@ -118,7 +118,7 @@ export function Sidebar({ isOpen, onClose }) {
 
         <div className="px-5 py-4 border-t border-slate-100">
           <p className="text-xs text-slate-400">Data Production v2.0</p>
-          <p className="text-xs text-slate-300">Powered by Firebase Firestore</p>
+          <p className="text-xs text-slate-300">Powered by Glory8</p>
         </div>
       </motion.aside>
     </>
