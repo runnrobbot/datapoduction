@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
 import {
   Plus, Search, Edit2, Trash2, PackagePlus,
   RefreshCw, ChevronLeft, ChevronRight
@@ -135,7 +134,6 @@ export default function BarangMasuk() {
     <div className="space-y-5">
       <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
         <div className="flex flex-col gap-3">
-          {/* Row 1: Search */}
           <div className="relative">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -146,7 +144,6 @@ export default function BarangMasuk() {
               className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
             />
           </div>
-          {/* Row 2: Date range + buttons */}
           <div className="flex gap-2 items-center">
             <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2 flex-1 min-w-0">
               <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setPage(1); }} className="py-1.5 text-sm text-slate-600 bg-transparent focus:outline-none w-full min-w-0" />
