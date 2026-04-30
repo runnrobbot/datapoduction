@@ -1,36 +1,19 @@
-import { USE_FIREBASE, apiFetch } from './db.js';
 import { db } from './firebase.js';
 import {
   collection, doc, getDocs, runTransaction,
-  query, orderBy, serverTimestamp
+  query, orderBy, serverTimestamp, onSnapshot
 } from 'firebase/firestore';
 
 const MASUK_COL  = 'barang_masuk';
 const BARANG_COL = 'barang';
 
 export async function getAllMasuk() {
-  if (!USE_FIREBASE) {
-    return await apiFetch('/barang-masuk');
-  }
   const q = query(collection(db, MASUK_COL), orderBy('created_at', 'desc'));
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
 export async function addMasuk(data) {
-  if (!USE_FIREBASE) {
-    return await apiFetch('/barang-masuk', {
-      method: 'POST',
-      body: JSON.stringify({
-        barang_id:   data.barang_id,
-        kode_barang: data.kode_barang || '',
-        nama_barang: data.nama_barang,
-        satuan:      data.satuan || 'pcs',
-        qty:         parseInt(data.qty),
-        keterangan:  data.keterangan || '',
-      }),
-    });
-  }
   await runTransaction(db, async (transaction) => {
     const barangRef  = doc(db, BARANG_COL, data.barang_id);
     const barangSnap = await transaction.get(barangRef);
@@ -54,17 +37,6 @@ export async function addMasuk(data) {
 }
 
 export async function updateMasuk(id, oldQty, newQty, barang_id, keterangan) {
-  if (!USE_FIREBASE) {
-    return await apiFetch(`/barang-masuk/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        barang_id,
-        old_qty:    parseInt(oldQty),
-        qty:        parseInt(newQty),
-        keterangan: keterangan || '',
-      }),
-    });
-  }
   await runTransaction(db, async (transaction) => {
     const masukRef  = doc(db, MASUK_COL, id);
     const masukSnap = await transaction.get(masukRef);
@@ -89,9 +61,6 @@ export async function updateMasuk(id, oldQty, newQty, barang_id, keterangan) {
 }
 
 export async function deleteMasuk(id) {
-  if (!USE_FIREBASE) {
-    return await apiFetch(`/barang-masuk/${id}`, { method: 'DELETE' });
-  }
   await runTransaction(db, async (transaction) => {
     const masukRef  = doc(db, MASUK_COL, id);
     const masukSnap = await transaction.get(masukRef);
@@ -109,8 +78,7 @@ export async function deleteMasuk(id) {
   });
 }
 
-import { onSnapshot } from 'firebase/firestore';
 export function subscribeMasuk(onData, onError) {
-  const q = query(collection(db, 'barang_masuk'), orderBy('created_at', 'desc'));
+  const q = query(collection(db, MASUK_COL), orderBy('created_at', 'desc'));
   return onSnapshot(q, snap => onData(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onError);
 }

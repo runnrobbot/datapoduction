@@ -16,7 +16,7 @@ import { LoadingTable } from '../components/LoadingTable';
 import { SearchDropdown } from '../components/SearchDropdown';
 import { AnimatedCard } from '../components/motionComponents';
 import { formatDate, formatCurrency } from '../utils/helpers';
-import { parseFile } from '../utils/importUtils';
+import { parseFile, parseCAFile } from '../utils/importUtils';
 import { exportToCSV, exportToExcel } from '../utils/exportUtils';
 
 const PAGE_SIZE = 50;
@@ -43,6 +43,7 @@ export default function Penjualan() {
   const [importMap, setImportMap] = useState({
     kode_barang: '', nama_barang: '', qty: '', tipe: '', harga: '', keterangan: '', tanggal: ''
   });
+  const [caImport, setCaImport] = useState(null); // { rows, skipped } untuk CA format
   const importRef = useRef(null);
 
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -153,11 +154,26 @@ export default function Penjualan() {
     const file = e.target.files[0];
     if (!file) return;
     try {
+      // Coba deteksi format CA terlebih dahulu
+      const caResult = await parseCAFile(file);
+      if (caResult.isCAFormat) {
+        if (!caResult.rows.length) {
+          toast.error('Tidak ada data invoice valid (harus diawali INV) di file ini');
+          return;
+        }
+        setCaImport(caResult);
+        setImportData([]);
+        setImportModalOpen(true);
+        return;
+      }
+
+      // Format biasa
       const data = await parseFile(file);
       if (!data.length) { toast.error('File kosong'); return; }
       const cols = Object.keys(data[0]);
       setImportColumns(cols);
       setImportData(data);
+      setCaImport(null);
       const map = { kode_barang: '', nama_barang: '', qty: '', tipe: '', harga: '', keterangan: '', tanggal: '' };
       cols.forEach(c => {
         const cl = c.toLowerCase();
@@ -179,12 +195,37 @@ export default function Penjualan() {
   }
 
   async function executeImport() {
-    if (!importMap.nama_barang && !importMap.kode_barang) {
-      toast.error('Petakan minimal kolom nama atau kode barang');
-      return;
-    }
     setSaving(true);
     try {
+      // Format CA: langsung import rows yang sudah di-parse
+      if (caImport) {
+        const items = caImport.rows.map(row => ({
+          kode_barang: '',
+          nama_barang: row.keterangan || row.no_invoice,
+          qty:         row.kts_keluar || 0,
+          tipe:        'offline',
+          harga:       0,
+          keterangan:  row.keterangan || '',
+          kota:        row.kota       || '',
+          no_invoice:  row.no_invoice || '',
+          tanggal:     row.tanggal    || '',
+          satuan:      'pcs',
+        }));
+        await batchImportPenjualan(items);
+        toast.success(`${items.length} data CA berhasil diimpor${caImport.skipped ? ` (${caImport.skipped} baris dilewati bukan INV)` : ''}`);
+        toast.info('Catatan: Stok tidak diperbarui secara otomatis untuk import massal');
+        setImportModalOpen(false);
+        setCaImport(null);
+        loadAll();
+        return;
+      }
+
+      // Format biasa
+      if (!importMap.nama_barang && !importMap.kode_barang) {
+        toast.error('Petakan minimal kolom nama atau kode barang');
+        setSaving(false);
+        return;
+      }
       const items = importData.map(row => ({
         kode_barang: importMap.kode_barang ? row[importMap.kode_barang]?.toString().trim() || '' : '',
         nama_barang: importMap.nama_barang ? row[importMap.nama_barang]?.toString().trim() || '' : '',
@@ -514,67 +555,106 @@ export default function Penjualan() {
         </form>
       </Modal>
 
-      <Modal isOpen={importModalOpen} onClose={() => setImportModalOpen(false)} title="Import Data Penjualan" size="lg">
+      <Modal isOpen={importModalOpen} onClose={() => { setImportModalOpen(false); setCaImport(null); }} title="Import Data Penjualan" size="lg">
         <div className="space-y-4">
-          <div className="bg-amber-50 border border-amber-100 rounded-lg px-4 py-3 text-sm text-amber-700">
-             Import massal tidak memperbarui stok secara otomatis. Cocok untuk data historis.
-            <br />
-            <span className="text-xs">{importData.length} baris ditemukan</span>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { key: 'nama_barang', label: 'Nama Barang' },
-              { key: 'kode_barang', label: 'Kode Barang' },
-              { key: 'qty', label: 'Qty / Jumlah' },
-              { key: 'tipe', label: 'Tipe (offline/online)' },
-              { key: 'harga', label: 'Harga Satuan' },
-              { key: 'keterangan', label: 'Keterangan' }
-            ].map(f => (
-              <div key={f.key}>
-                <label className="block text-xs text-slate-500 mb-1">{f.label}</label>
-                <select
-                  value={importMap[f.key]}
-                  onChange={e => setImportMap(m => ({ ...m, [f.key]: e.target.value }))}
-                  className="w-full px-2.5 py-2 border border-slate-200 rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                >
-                  <option value="">— Tidak dipetakan —</option>
-                  {importColumns.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+          {caImport ? (
+            /* ── Preview CA Format ── */
+            <>
+              <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-4 py-3 text-sm text-emerald-800">
+                <strong>Format CA (Kartu Stok) terdeteksi</strong>
+                <br />
+                <span className="text-xs">
+                  {caImport.rows.length} baris invoice ditemukan
+                  {caImport.skipped > 0 && ` · ${caImport.skipped} baris dilewati (bukan INV)`}
+                </span>
               </div>
-            ))}
-          </div>
-          {importData.length > 0 && (
-            <div className="overflow-x-auto border border-slate-200 rounded-lg">
-              <table className="w-full text-xs">
-                <thead className="bg-slate-50">
-                  <tr>
-                    {['Nama', 'Kode', 'Qty', 'Tipe', 'Harga'].map(h => (
-                      <th key={h} className="px-3 py-2 text-left text-slate-500">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {importData.slice(0, 4).map((row, i) => (
-                    <tr key={i} className="border-t border-slate-100">
-                      <td className="px-3 py-1.5 text-slate-700 max-w-[100px] truncate">{importMap.nama_barang ? row[importMap.nama_barang] || '—' : '—'}</td>
-                      <td className="px-3 py-1.5 text-slate-700">{importMap.kode_barang ? row[importMap.kode_barang] || '—' : '—'}</td>
-                      <td className="px-3 py-1.5 text-slate-700">{importMap.qty ? row[importMap.qty] || '—' : '—'}</td>
-                      <td className="px-3 py-1.5 text-slate-700">{importMap.tipe ? row[importMap.tipe] || '—' : '—'}</td>
-                      <td className="px-3 py-1.5 text-slate-700">{importMap.harga ? row[importMap.harga] || '—' : '—'}</td>
+              <div className="overflow-x-auto border border-slate-200 rounded-lg">
+                <table className="w-full text-xs">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      {['Tanggal', 'No Invoice', 'Kota', 'Keterangan', 'Kts. Keluar'].map(h => (
+                        <th key={h} className="px-3 py-2 text-left text-slate-500">{h}</th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {caImport.rows.slice(0, 5).map((row, i) => (
+                      <tr key={i} className="border-t border-slate-100">
+                        <td className="px-3 py-1.5 text-slate-700">{row.tanggal || '—'}</td>
+                        <td className="px-3 py-1.5 text-slate-700 font-mono">{row.no_invoice}</td>
+                        <td className="px-3 py-1.5 text-slate-700">{row.kota || '—'}</td>
+                        <td className="px-3 py-1.5 text-slate-700 max-w-[150px] truncate">{row.keterangan || '—'}</td>
+                        <td className="px-3 py-1.5 text-slate-700">{row.kts_keluar}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : (
+            /* ── Preview Format Biasa ── */
+            <>
+              <div className="bg-amber-50 border border-amber-100 rounded-lg px-4 py-3 text-sm text-amber-700">
+                Import massal tidak memperbarui stok secara otomatis. Cocok untuk data historis.
+                <br />
+                <span className="text-xs">{importData.length} baris ditemukan</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { key: 'nama_barang', label: 'Nama Barang' },
+                  { key: 'kode_barang', label: 'Kode Barang' },
+                  { key: 'qty', label: 'Qty / Jumlah' },
+                  { key: 'tipe', label: 'Tipe (offline/online)' },
+                  { key: 'harga', label: 'Harga Satuan' },
+                  { key: 'keterangan', label: 'Keterangan' }
+                ].map(f => (
+                  <div key={f.key}>
+                    <label className="block text-xs text-slate-500 mb-1">{f.label}</label>
+                    <select
+                      value={importMap[f.key]}
+                      onChange={e => setImportMap(m => ({ ...m, [f.key]: e.target.value }))}
+                      className="w-full px-2.5 py-2 border border-slate-200 rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    >
+                      <option value="">— Tidak dipetakan —</option>
+                      {importColumns.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                ))}
+              </div>
+              {importData.length > 0 && (
+                <div className="overflow-x-auto border border-slate-200 rounded-lg">
+                  <table className="w-full text-xs">
+                    <thead className="bg-slate-50">
+                      <tr>
+                        {['Nama', 'Kode', 'Qty', 'Tipe', 'Harga'].map(h => (
+                          <th key={h} className="px-3 py-2 text-left text-slate-500">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {importData.slice(0, 4).map((row, i) => (
+                        <tr key={i} className="border-t border-slate-100">
+                          <td className="px-3 py-1.5 text-slate-700 max-w-[100px] truncate">{importMap.nama_barang ? row[importMap.nama_barang] || '—' : '—'}</td>
+                          <td className="px-3 py-1.5 text-slate-700">{importMap.kode_barang ? row[importMap.kode_barang] || '—' : '—'}</td>
+                          <td className="px-3 py-1.5 text-slate-700">{importMap.qty ? row[importMap.qty] || '—' : '—'}</td>
+                          <td className="px-3 py-1.5 text-slate-700">{importMap.tipe ? row[importMap.tipe] || '—' : '—'}</td>
+                          <td className="px-3 py-1.5 text-slate-700">{importMap.harga ? row[importMap.harga] || '—' : '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
           )}
           <div className="flex gap-3 pt-2">
-            <button onClick={() => setImportModalOpen(false)}
+            <button onClick={() => { setImportModalOpen(false); setCaImport(null); }}
               className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 hover:bg-slate-50">
               Batal
             </button>
             <button onClick={executeImport} disabled={saving}
               className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-60">
-              {saving ? 'Mengimpor…' : `Import ${importData.length} Data`}
+              {saving ? 'Mengimpor…' : `Import ${caImport ? caImport.rows.length : importData.length} Data`}
             </button>
           </div>
         </div>

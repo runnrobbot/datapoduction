@@ -14,17 +14,4 @@ export default defineConfig({
     },
   },
   assetsInclude: ['**/*.svg', '**/*.csv'],
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost',
-        changeOrigin: true,
-        rewrite: (path) => {
-          let p = path.replace(/^\/api/, '/inventory_api');
-          if (!p.endsWith('/')) p += '/';
-          return p;
-        },
-      },
-    },
-  },
 })
