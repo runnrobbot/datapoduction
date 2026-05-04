@@ -43,7 +43,11 @@ export default function Penjualan() {
   const [importMap, setImportMap] = useState({
     kode_barang: '', nama_barang: '', qty: '', tipe: '', harga: '', keterangan: '', tanggal: ''
   });
-  const [caImport, setCaImport] = useState(null); // { rows, skipped } untuk CA format
+  // CA format state
+  const [caImport, setCaImport] = useState(null);           // { rows, skipped }
+  const [caStep, setCaStep] = useState('pilih_barang');      // 'pilih_barang' | 'preview'
+  const [caSelectedBarang, setCaSelectedBarang] = useState(null);
+  const [caBarangSearch, setCaBarangSearch] = useState('');
   const importRef = useRef(null);
 
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -150,6 +154,15 @@ export default function Penjualan() {
     }
   }
 
+  function resetImport() {
+    setCaImport(null);
+    setCaStep('pilih_barang');
+    setCaSelectedBarang(null);
+    setCaBarangSearch('');
+    setImportData([]);
+    setImportColumns([]);
+  }
+
   async function handleFileChange(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -158,11 +171,12 @@ export default function Penjualan() {
       const caResult = await parseCAFile(file);
       if (caResult.isCAFormat) {
         if (!caResult.rows.length) {
-          toast.error('Tidak ada data invoice valid (harus diawali INV) di file ini');
+          toast.error('Tidak ada baris "Faktur Penjualan" yang ditemukan di file ini');
           return;
         }
+        resetImport();
         setCaImport(caResult);
-        setImportData([]);
+        setCaStep('pilih_barang');
         setImportModalOpen(true);
         return;
       }
@@ -197,25 +211,32 @@ export default function Penjualan() {
   async function executeImport() {
     setSaving(true);
     try {
-      // Format CA: langsung import rows yang sudah di-parse
+      // Format CA: gunakan barang yang dipilih dari master
       if (caImport) {
+        if (!caSelectedBarang) {
+          toast.error('Pilih barang terlebih dahulu');
+          setSaving(false);
+          return;
+        }
         const items = caImport.rows.map(row => ({
-          kode_barang: '',
-          nama_barang: row.keterangan || row.no_invoice,
+          barang_id:   caSelectedBarang.id,
+          kode_barang: caSelectedBarang.kode || '',
+          nama_barang: caSelectedBarang.nama,
+          satuan:      caSelectedBarang.satuan || 'pcs',
           qty:         row.kts_keluar || 0,
           tipe:        'offline',
-          harga:       0,
+          harga:       caSelectedBarang.harga_jual || 0,
           keterangan:  row.keterangan || '',
           kota:        row.kota       || '',
-          no_invoice:  row.no_invoice || '',
+          no_invoice:  row.no_sumber  || '',
           tanggal:     row.tanggal    || '',
-          satuan:      'pcs',
         }));
         await batchImportPenjualan(items);
-        toast.success(`${items.length} data CA berhasil diimpor${caImport.skipped ? ` (${caImport.skipped} baris dilewati bukan INV)` : ''}`);
+        const skippedMsg = caImport.skipped > 0 ? ` (${caImport.skipped} baris non-penjualan dilewati)` : '';
+        toast.success(`${items.length} transaksi "${caSelectedBarang.nama}" berhasil diimpor${skippedMsg}`);
         toast.info('Catatan: Stok tidak diperbarui secara otomatis untuk import massal');
         setImportModalOpen(false);
-        setCaImport(null);
+        resetImport();
         loadAll();
         return;
       }
@@ -555,44 +576,167 @@ export default function Penjualan() {
         </form>
       </Modal>
 
-      <Modal isOpen={importModalOpen} onClose={() => { setImportModalOpen(false); setCaImport(null); }} title="Import Data Penjualan" size="lg">
+      <Modal
+        isOpen={importModalOpen}
+        onClose={() => { setImportModalOpen(false); resetImport(); }}
+        title={caImport
+          ? caStep === 'pilih_barang' ? 'Import CA — Pilih Barang' : 'Import CA — Preview Data'
+          : 'Import Data Penjualan'}
+        size="lg"
+      >
         <div className="space-y-4">
           {caImport ? (
-            /* ── Preview CA Format ── */
-            <>
-              <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-4 py-3 text-sm text-emerald-800">
-                <strong>Format CA (Kartu Stok) terdeteksi</strong>
-                <br />
-                <span className="text-xs">
-                  {caImport.rows.length} baris invoice ditemukan
-                  {caImport.skipped > 0 && ` · ${caImport.skipped} baris dilewati (bukan INV)`}
-                </span>
-              </div>
-              <div className="overflow-x-auto border border-slate-200 rounded-lg">
-                <table className="w-full text-xs">
-                  <thead className="bg-slate-50">
-                    <tr>
-                      {['Tanggal', 'No Invoice', 'Kota', 'Keterangan', 'Kts. Keluar'].map(h => (
-                        <th key={h} className="px-3 py-2 text-left text-slate-500">{h}</th>
+            caStep === 'pilih_barang' ? (
+              /* ── Step 1: Pilih Barang dari Master ── */
+              <>
+                <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 text-sm text-blue-800">
+                  <strong>Format CA (Kartu Stok) terdeteksi</strong>
+                  <p className="text-xs mt-1 text-blue-700">
+                    {caImport.rows.length} baris Faktur Penjualan ditemukan
+                    {caImport.skipped > 0 && ` · ${caImport.skipped} baris lain dilewati`}
+                    . Pilih barang dari master untuk dikaitkan dengan semua transaksi ini.
+                  </p>
+                </div>
+
+                {/* Search barang */}
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1.5">Cari Barang</label>
+                  <input
+                    type="text"
+                    value={caBarangSearch}
+                    onChange={e => setCaBarangSearch(e.target.value)}
+                    placeholder="Ketik nama atau kode barang..."
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    autoFocus
+                  />
+                </div>
+
+                {/* List barang */}
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  <div className="max-h-64 overflow-y-auto">
+                    {barangList
+                      .filter(b => {
+                        const q = caBarangSearch.toLowerCase();
+                        return !q || b.nama?.toLowerCase().includes(q) || b.kode?.toLowerCase().includes(q);
+                      })
+                      .map(b => (
+                        <button
+                          key={b.id}
+                          onClick={() => setCaSelectedBarang(b)}
+                          className={`w-full flex items-center justify-between px-4 py-3 text-left text-sm border-b border-slate-100 last:border-0 transition-colors ${
+                            caSelectedBarang?.id === b.id
+                              ? 'bg-emerald-50 border-l-2 border-l-emerald-500'
+                              : 'hover:bg-slate-50'
+                          }`}
+                        >
+                          <div>
+                            <div className="font-medium text-slate-800">{b.nama}</div>
+                            {b.kode && <div className="text-xs text-slate-400 mt-0.5">{b.kode}</div>}
+                          </div>
+                          <div className="text-right ml-4 flex-shrink-0">
+                            <div className="text-xs text-slate-500">{b.satuan}</div>
+                            <div className="text-xs text-slate-400">Stok: {b.stok ?? 0}</div>
+                          </div>
+                        </button>
                       ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {caImport.rows.slice(0, 5).map((row, i) => (
-                      <tr key={i} className="border-t border-slate-100">
-                        <td className="px-3 py-1.5 text-slate-700">{row.tanggal || '—'}</td>
-                        <td className="px-3 py-1.5 text-slate-700 font-mono">{row.no_invoice}</td>
-                        <td className="px-3 py-1.5 text-slate-700">{row.kota || '—'}</td>
-                        <td className="px-3 py-1.5 text-slate-700 max-w-[150px] truncate">{row.keterangan || '—'}</td>
-                        <td className="px-3 py-1.5 text-slate-700">{row.kts_keluar}</td>
+                    {barangList.filter(b => {
+                      const q = caBarangSearch.toLowerCase();
+                      return !q || b.nama?.toLowerCase().includes(q) || b.kode?.toLowerCase().includes(q);
+                    }).length === 0 && (
+                      <div className="px-4 py-6 text-center text-sm text-slate-400">
+                        Barang tidak ditemukan
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Selected info */}
+                {caSelectedBarang && (
+                  <div className="flex items-center gap-2 px-3 py-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-800">
+                    <span className="text-emerald-500">✓</span>
+                    <span><strong>{caSelectedBarang.nama}</strong> dipilih</span>
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-1">
+                  <button
+                    onClick={() => { setImportModalOpen(false); resetImport(); }}
+                    className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 hover:bg-slate-50"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={() => { if (!caSelectedBarang) { toast.error('Pilih barang dulu'); return; } setCaStep('preview'); }}
+                    disabled={!caSelectedBarang}
+                    className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    Lanjut → Preview
+                  </button>
+                </div>
+              </>
+            ) : (
+              /* ── Step 2: Preview sebelum import ── */
+              <>
+                <div className="flex items-center gap-3 px-4 py-3 bg-emerald-50 border border-emerald-100 rounded-lg">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs text-emerald-600 font-medium">Barang</div>
+                    <div className="text-sm font-semibold text-emerald-900 truncate">{caSelectedBarang?.nama}</div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <div className="text-xs text-emerald-600">{caImport.rows.length} transaksi</div>
+                    {caImport.skipped > 0 && (
+                      <div className="text-xs text-slate-400">{caImport.skipped} dilewati</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto border border-slate-200 rounded-lg">
+                  <table className="w-full text-xs">
+                    <thead className="bg-slate-50">
+                      <tr>
+                        {['Tanggal', 'No. Sumber', 'Kota', 'Keterangan', 'Kts. Keluar'].map(h => (
+                          <th key={h} className="px-3 py-2 text-left text-slate-500 font-medium">{h}</th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
+                    </thead>
+                    <tbody>
+                      {caImport.rows.slice(0, 6).map((row, i) => (
+                        <tr key={i} className="border-t border-slate-100">
+                          <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{row.tanggal || '—'}</td>
+                          <td className="px-3 py-2 text-slate-700 font-mono">{row.no_sumber || '—'}</td>
+                          <td className="px-3 py-2 text-slate-600">{row.kota || '—'}</td>
+                          <td className="px-3 py-2 text-slate-600 max-w-[140px] truncate">{row.keterangan || '—'}</td>
+                          <td className="px-3 py-2 text-slate-700 font-medium">{row.kts_keluar}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {caImport.rows.length > 6 && (
+                    <div className="px-3 py-2 text-xs text-slate-400 bg-slate-50 border-t border-slate-100">
+                      + {caImport.rows.length - 6} baris lainnya
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-3 pt-1">
+                  <button
+                    onClick={() => setCaStep('pilih_barang')}
+                    className="px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 hover:bg-slate-50"
+                  >
+                    ← Kembali
+                  </button>
+                  <button
+                    onClick={executeImport}
+                    disabled={saving}
+                    className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-60"
+                  >
+                    {saving ? 'Mengimpor…' : `Import ${caImport.rows.length} Transaksi`}
+                  </button>
+                </div>
+              </>
+            )
           ) : (
-            /* ── Preview Format Biasa ── */
+            /* ── Format Biasa ── */
             <>
               <div className="bg-amber-50 border border-amber-100 rounded-lg px-4 py-3 text-sm text-amber-700">
                 Import massal tidak memperbarui stok secara otomatis. Cocok untuk data historis.
@@ -645,18 +789,18 @@ export default function Penjualan() {
                   </table>
                 </div>
               )}
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => { setImportModalOpen(false); resetImport(); }}
+                  className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 hover:bg-slate-50">
+                  Batal
+                </button>
+                <button onClick={executeImport} disabled={saving}
+                  className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-60">
+                  {saving ? 'Mengimpor…' : `Import ${importData.length} Data`}
+                </button>
+              </div>
             </>
           )}
-          <div className="flex gap-3 pt-2">
-            <button onClick={() => { setImportModalOpen(false); setCaImport(null); }}
-              className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 hover:bg-slate-50">
-              Batal
-            </button>
-            <button onClick={executeImport} disabled={saving}
-              className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-60">
-              {saving ? 'Mengimpor…' : `Import ${caImport ? caImport.rows.length : importData.length} Data`}
-            </button>
-          </div>
         </div>
       </Modal>
 
