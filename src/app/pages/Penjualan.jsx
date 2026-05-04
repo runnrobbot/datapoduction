@@ -234,7 +234,6 @@ export default function Penjualan() {
         await batchImportPenjualan(items);
         const skippedMsg = caImport.skipped > 0 ? ` (${caImport.skipped} baris non-penjualan dilewati)` : '';
         toast.success(`${items.length} transaksi "${caSelectedBarang.nama}" berhasil diimpor${skippedMsg}`);
-        toast.info('Catatan: Stok tidak diperbarui secara otomatis untuk import massal');
         setImportModalOpen(false);
         resetImport();
         loadAll();
@@ -259,7 +258,6 @@ export default function Penjualan() {
 
       await batchImportPenjualan(items);
       toast.success(`${items.length} data penjualan berhasil diimpor`);
-      toast.info('Catatan: Stok tidak diperbarui secara otomatis untuk import massal');
       setImportModalOpen(false);
       loadAll();
     } catch (err) {

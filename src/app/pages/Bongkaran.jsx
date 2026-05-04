@@ -22,7 +22,6 @@ const STATUS_STYLE = {
   'Sudah Dibongkar': 'bg-emerald-50 text-emerald-700 border border-emerald-100',
 };
 
-/* ─── Single item row: preview + inline edit toggle ───── */
 function ItemRevisiRow({ item, index, onChange }) {
   const [editing, setEditing] = useState(false);
 
@@ -31,10 +30,8 @@ function ItemRevisiRow({ item, index, onChange }) {
   return (
     <div className={`border rounded-xl overflow-hidden transition-colors ${editing ? 'border-emerald-200' : 'border-slate-100'}`}>
 
-      {/* ── Preview row — always visible ─────────────────── */}
       <div className="flex items-start gap-3 px-4 py-3 bg-white">
         <div className="flex-1 min-w-0">
-          {/* Nama & kode */}
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
               {item.kode_barang || '—'}
@@ -42,7 +39,6 @@ function ItemRevisiRow({ item, index, onChange }) {
             <span className="text-sm font-semibold text-slate-800">{item.deskripsi || '—'}</span>
           </div>
 
-          {/* Data PO asli — read-only chips */}
           <div className="flex flex-wrap gap-2 mb-2">
             {[
               { label: 'Box', value: item.box },
@@ -56,7 +52,6 @@ function ItemRevisiRow({ item, index, onChange }) {
             ))}
           </div>
 
-          {/* Qty Datang result — shown when filled */}
           <div className="flex flex-wrap gap-2">
             <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs border ${
               hasQtyDatang
@@ -78,7 +73,6 @@ function ItemRevisiRow({ item, index, onChange }) {
           </div>
         </div>
 
-        {/* Edit toggle */}
         <button
           type="button"
           onClick={() => setEditing(e => !e)}
@@ -93,7 +87,6 @@ function ItemRevisiRow({ item, index, onChange }) {
         </button>
       </div>
 
-      {/* ── Edit panel — hanya Qty Datang & Keterangan ───── */}
       {editing && (
         <motion.div
           initial={{ height: 0, opacity: 0 }}
@@ -102,7 +95,6 @@ function ItemRevisiRow({ item, index, onChange }) {
           transition={{ duration: 0.2, ease: 'easeOut' }}
           className="border-t border-emerald-100 bg-emerald-50/40 px-4 py-4"
         >
-          {/* Read-only reference row */}
           <div className="flex flex-wrap gap-4 mb-4 pb-3 border-b border-emerald-100">
             <p className="w-full text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Data dari PO (tidak dapat diubah)</p>
             {[
@@ -119,7 +111,6 @@ function ItemRevisiRow({ item, index, onChange }) {
             ))}
           </div>
 
-          {/* Editable fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1.5">
@@ -264,16 +255,13 @@ export default function Bongkaran() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate]     = useState('');
 
-  // Modal revisi
   const [revisiTarget, setRevisiTarget] = useState(null);
   const [revisiItems, setRevisiItems]   = useState([]);
   const [saving, setSaving]             = useState(false);
 
-  // Confirm selesai
   const [selesaiTarget, setSelesaiTarget] = useState(null);
   const [deleteTarget, setDeleteTarget]   = useState(null);
 
-  /* filter */
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return list.filter(b => {
@@ -299,7 +287,6 @@ export default function Bongkaran() {
   const pending  = useMemo(() => filtered.filter(b => b.status !== 'Sudah Dibongkar'), [filtered]);
   const history  = useMemo(() => filtered.filter(b => b.status === 'Sudah Dibongkar'), [filtered]);
 
-  /* open revisi modal */
   function openRevisi(b) {
     setRevisiTarget(b);
     setRevisiItems(b.items ? b.items.map(i => ({ ...i })) : []);
@@ -355,7 +342,6 @@ export default function Bongkaran() {
   return (
     <div className="space-y-5">
 
-      {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {[
           { label: 'Menunggu Revisi', value: list.filter(b => b.status !== 'Sudah Dibongkar').length, color: 'amber' },
@@ -380,10 +366,8 @@ export default function Bongkaran() {
         ))}
       </div>
 
-      {/* Filters */}
       <div className="bg-white rounded-xl border border-slate-200 p-4">
         <div className="flex flex-col gap-3">
-          {/* Row 1: Search */}
           <div className="relative">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -394,7 +378,6 @@ export default function Bongkaran() {
               className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
             />
           </div>
-          {/* Row 2: Date range + Refresh */}
           <div className="flex gap-2 items-center">
             <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2 flex-1 min-w-0">
               <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="py-1.5 text-sm text-slate-600 bg-transparent focus:outline-none w-full min-w-0" />

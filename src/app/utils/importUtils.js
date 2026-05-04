@@ -115,9 +115,10 @@ function isNamaKota(r, idxTanggal, idxNoSumber, idxSaldo) {
  *   { isCAFormat, rows, skipped }
  *   rows: array of {
  *     tanggal, no_sumber, tipe, keterangan,
- *     kts_masuk, kts_keluar, saldo, kota,
- *     is_penjualan  ← true jika Tipe = 'Faktur Penjualan'
+ *     kts_keluar, saldo, kota
  *   }
+ *   Catatan: kts_masuk sengaja diabaikan — hanya kts_keluar yang dipakai
+ *   karena import CA hanya untuk mencatat penjualan (pengurangan stok).
  *   skipped: baris yang ada tanggal tapi bukan Faktur Penjualan
  *            (RPNJ, TB, Penyesuaian, Pembelian, dll)
  */
@@ -153,7 +154,7 @@ export async function parseCAFile(file) {
     no_sumber:  hr.indexOf('No. Sumber'),
     tipe:       hr.indexOf('Tipe'),
     keterangan: hr.indexOf('Keterangan'),
-    kts_masuk:  hr.indexOf('Kts. Masuk'),
+    // kts_masuk sengaja tidak diambil — import CA hanya pakai kts_keluar
     kts_keluar: hr.indexOf('Kts. Keluar'),
     saldo:      hr.indexOf('Saldo'),
   };
@@ -197,7 +198,6 @@ export async function parseCAFile(file) {
       no_sumber:  noSumber,
       tipe,
       keterangan: String(r[idx.keterangan] ?? '').trim(),
-      kts_masuk:  parseAngka(r[idx.kts_masuk]),
       kts_keluar: parseAngka(r[idx.kts_keluar]),
       saldo:      parseAngka(r[idx.saldo]),
       kota:       kotaAktif,

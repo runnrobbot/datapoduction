@@ -60,10 +60,20 @@ export async function deletePenjualan(id) {
 }
 
 export async function batchImportPenjualan(items) {
+  const valid = items.filter(item => item.barang_id && (parseInt(item.qty) || 0) > 0);
+  if (!valid.length) return;
+
+  const qtyPerBarang = {};
+  valid.forEach(item => {
+    const id  = item.barang_id;
+    const qty = parseInt(item.qty) || 0;
+    qtyPerBarang[id] = (qtyPerBarang[id] || 0) + qty;
+  });
+
   const CHUNK = 400;
-  for (let i = 0; i < items.length; i += CHUNK) {
+  for (let i = 0; i < valid.length; i += CHUNK) {
     const batch = writeBatch(db);
-    items.slice(i, i + CHUNK).forEach(item => {
+    valid.slice(i, i + CHUNK).forEach(item => {
       const ref = doc(collection(db, JUAL_COL));
       batch.set(ref, {
         barang_id:   item.barang_id   || '',
@@ -81,6 +91,16 @@ export async function batchImportPenjualan(items) {
       });
     });
     await batch.commit();
+  }
+
+  for (const [barangId, totalQty] of Object.entries(qtyPerBarang)) {
+    await runTransaction(db, async (transaction) => {
+      const barangRef  = doc(db, BARANG_COL, barangId);
+      const barangSnap = await transaction.get(barangRef);
+      if (!barangSnap.exists()) return;
+      const currentStok = barangSnap.data().stok || 0;
+      transaction.update(barangRef, { stok: Math.max(0, currentStok - totalQty) });
+    });
   }
 }
 
