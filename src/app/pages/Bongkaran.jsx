@@ -14,7 +14,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { LoadingTable } from '../components/LoadingTable';
 import { AnimatedCard } from '../components/motionComponents';
-import { formatDate } from '../utils/helpers';
+import { formatDate, statusLabel } from '../utils/helpers';
 
 /* ─── Status badge helpers ────────────────────────────── */
 const STATUS_STYLE = {
@@ -28,12 +28,12 @@ function ItemRevisiRow({ item, index, onChange }) {
   const hasQtyDatang = item.qty_datang !== undefined && item.qty_datang !== '';
 
   return (
-    <div className={`border rounded-xl overflow-hidden transition-colors ${editing ? 'border-emerald-200' : 'border-slate-100'}`}>
+    <div className={`border rounded-xl overflow-hidden transition-colors ${editing ? 'border-brand-200' : 'border-slate-100'}`}>
 
       <div className="flex items-start gap-3 px-4 py-3 bg-white">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+            <span className="text-xs font-mono font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded">
               {item.kode_barang || '—'}
             </span>
             <span className="text-sm font-semibold text-slate-800">{item.deskripsi || '—'}</span>
@@ -41,9 +41,9 @@ function ItemRevisiRow({ item, index, onChange }) {
 
           <div className="flex flex-wrap gap-2 mb-2">
             {[
-              { label: 'Box', value: item.box },
+              { label: 'Kemasan', value: item.box },
               { label: 'Isi', value: item.isi },
-              { label: 'Qty PO', value: item.qty ? `${item.qty} pcs` : null },
+              { label: 'Qty PO', value: item.qty ? `${item.qty} unit` : null },
             ].map(({ label, value }) => (
               <span key={label} className="inline-flex items-center gap-1 bg-slate-50 border border-slate-100 rounded-md px-2 py-0.5 text-xs">
                 <span className="text-slate-400 font-medium">{label}</span>
@@ -58,9 +58,9 @@ function ItemRevisiRow({ item, index, onChange }) {
                 ? 'bg-emerald-50 border-emerald-100'
                 : 'bg-amber-50 border-amber-100'
             }`}>
-              <span className="font-medium text-slate-400">Qty Datang</span>
+              <span className="font-medium text-slate-400">Qty Diterima</span>
               {hasQtyDatang
-                ? <strong className="text-emerald-700">{item.qty_datang} pcs</strong>
+                ? <strong className="text-emerald-700">{item.qty_datang} unit</strong>
                 : <em className="text-amber-500 not-italic font-medium">Belum diisi</em>
               }
             </span>
@@ -78,8 +78,8 @@ function ItemRevisiRow({ item, index, onChange }) {
           onClick={() => setEditing(e => !e)}
           className={`shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
             editing
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-              : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 hover:border-emerald-200'
+              ? 'bg-brand-50 border-brand-200 text-brand-700'
+              : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-brand-600 hover:border-brand-200'
           }`}
         >
           <Edit2 size={11} />
@@ -93,14 +93,14 @@ function ItemRevisiRow({ item, index, onChange }) {
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="border-t border-emerald-100 bg-emerald-50/40 px-4 py-4"
+          className="border-t border-brand-100 bg-brand-50/40 px-4 py-4"
         >
-          <div className="flex flex-wrap gap-4 mb-4 pb-3 border-b border-emerald-100">
+          <div className="flex flex-wrap gap-4 mb-4 pb-3 border-b border-brand-100">
             <p className="w-full text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Data dari PO (tidak dapat diubah)</p>
             {[
-              { label: 'Box',    value: item.box  || '—' },
-              { label: 'Isi',    value: item.isi   || '—' },
-              { label: 'Qty PO', value: item.qty ? `${item.qty} pcs` : '—' },
+              { label: 'Kemasan', value: item.box  || '—' },
+              { label: 'Isi',     value: item.isi   || '—' },
+              { label: 'Qty PO',  value: item.qty ? `${item.qty} unit` : '—' },
             ].map(({ label, value }) => (
               <div key={label}>
                 <p className="text-[11px] text-slate-400 mb-0.5">{label}</p>
@@ -114,17 +114,17 @@ function ItemRevisiRow({ item, index, onChange }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                Qty Datang <span className="text-red-400">*</span>
-                <span className="ml-1 font-normal text-slate-400">(yang masuk ke stok)</span>
+                Qty Diterima <span className="text-red-400">*</span>
+                <span className="ml-1 font-normal text-slate-400">(lolos inspeksi, masuk ke stok)</span>
               </label>
               <input
                 type="number"
                 value={item.qty_datang ?? ''}
                 onChange={e => onChange(index, { qty_datang: e.target.value })}
-                placeholder="Masukkan jumlah yang datang"
+                placeholder="Masukkan jumlah yang diterima"
                 min="0"
                 autoFocus={editing}
-                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 font-semibold"
+                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 font-semibold"
               />
             </div>
             <div>
@@ -136,8 +136,8 @@ function ItemRevisiRow({ item, index, onChange }) {
                 type="text"
                 value={item.catatan || ''}
                 onChange={e => onChange(index, { catatan: e.target.value })}
-                placeholder="Cth: kondisi barang, catatan"
-                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+                placeholder="Cth: kondisi fisik, S/N, sertifikat (Form 1 / 8130-3)"
+                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
               />
             </div>
           </div>
@@ -165,7 +165,7 @@ function BongkaranCard({ bongkaran, onRevisi, onSelesai, onDelete, isSuperAdmin 
           </div>
           <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold ${STATUS_STYLE[bongkaran.status] || 'bg-slate-50 text-slate-500 border border-slate-200'}`}>
             {isDone ? <CheckCircle size={10} /> : <AlertTriangle size={10} />}
-            {bongkaran.status}
+            {statusLabel(bongkaran.status)}
           </span>
         </div>
         <div className="flex items-center gap-2 ml-2">
@@ -175,11 +175,11 @@ function BongkaranCard({ bongkaran, onRevisi, onSelesai, onDelete, isSuperAdmin 
                 onClick={e => { e.stopPropagation(); onRevisi(bongkaran); }}
                 className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100"
               >
-                <Edit2 size={11} /> Revisi
+                <Edit2 size={11} /> Inspeksi
               </button>
               <button
                 onClick={e => { e.stopPropagation(); onSelesai(bongkaran); }}
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg bg-brand-600 text-white hover:bg-brand-700"
               >
                 <CheckCircle size={11} /> Selesai
               </button>
@@ -202,28 +202,28 @@ function BongkaranCard({ bongkaran, onRevisi, onSelesai, onDelete, isSuperAdmin 
           <div className="border border-slate-100 rounded-lg overflow-hidden">
             <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-slate-50 border-b border-slate-100">
               <span className="col-span-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Barang</span>
-              <span className="col-span-1 text-xs font-semibold text-slate-400 uppercase tracking-wider">Box</span>
+              <span className="col-span-1 text-xs font-semibold text-slate-400 uppercase tracking-wider">Kemasan</span>
               <span className="col-span-1 text-xs font-semibold text-slate-400 uppercase tracking-wider">Isi</span>
               <span className="col-span-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Qty PO</span>
-              <span className="col-span-2 text-xs font-semibold text-emerald-600 uppercase tracking-wider">Qty Datang</span>
+              <span className="col-span-2 text-xs font-semibold text-emerald-600 uppercase tracking-wider">Qty Diterima</span>
               <span className="col-span-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Keterangan</span>
             </div>
             <div className="px-3">
               {(bongkaran.items || []).map((item, i) => (
                 <div key={i} className="grid grid-cols-12 gap-2 py-2.5 border-b border-slate-50 last:border-0 items-center">
                   <div className="col-span-3">
-                    <p className="text-xs font-mono font-bold text-emerald-600">{item.kode_barang || '—'}</p>
+                    <p className="text-xs font-mono font-bold text-brand-600">{item.kode_barang || '—'}</p>
                     <p className="text-sm text-slate-700 truncate">{item.deskripsi || '—'}</p>
                   </div>
                   <div className="col-span-1 text-sm text-slate-600">{item.box || '—'}</div>
                   <div className="col-span-1 text-sm text-slate-600">{item.isi || '—'}</div>
                   <div className="col-span-2 text-sm text-slate-500">
-                    {item.qty || 0} <span className="text-xs text-slate-400">pcs</span>
+                    {item.qty || 0} <span className="text-xs text-slate-400">unit</span>
                   </div>
                   <div className="col-span-2">
                     {item.qty_datang !== undefined && item.qty_datang !== '' ? (
                       <span className="text-sm font-bold text-emerald-700">
-                        {item.qty_datang} <span className="text-xs font-normal text-emerald-400">pcs</span>
+                        {item.qty_datang} <span className="text-xs font-normal text-emerald-400">unit</span>
                       </span>
                     ) : (
                       <span className="text-xs text-amber-500 font-medium">Belum diisi</span>
@@ -305,7 +305,7 @@ export default function Bongkaran() {
     setSaving(true);
     try {
       await updateBongkaran(revisiTarget.id, { items: revisiItems });
-      toast.success('Revisi berhasil disimpan');
+      toast.success('Hasil inspeksi berhasil disimpan');
       setRevisiTarget(null);
       loadData();
     } catch (err) {
@@ -319,7 +319,7 @@ export default function Bongkaran() {
     if (!selesaiTarget) return;
     try {
       await selesaikanBongkaran(selesaiTarget.id, selesaiTarget);
-      toast.success('Bongkaran selesai! Data masuk ke Barang Masuk.');
+      toast.success('Inspeksi selesai! Data masuk ke Barang Masuk.');
       setSelesaiTarget(null);
       loadData();
     } catch (err) {
@@ -331,7 +331,7 @@ export default function Bongkaran() {
     if (!deleteTarget) return;
     try {
       await deleteBongkaran(deleteTarget.id);
-      toast.success('Data bongkaran dihapus');
+      toast.success('Data inspeksi dihapus');
       setDeleteTarget(null);
       loadData();
     } catch (err) {
@@ -344,9 +344,9 @@ export default function Bongkaran() {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {[
-          { label: 'Menunggu Revisi', value: list.filter(b => b.status !== 'Sudah Dibongkar').length, color: 'amber' },
-          { label: 'Sudah Dibongkar', value: list.filter(b => b.status === 'Sudah Dibongkar').length, color: 'green' },
-          { label: 'Total Bongkaran', value: list.length, color: 'blue' },
+          { label: 'Menunggu Inspeksi', value: list.filter(b => b.status !== 'Sudah Dibongkar').length, color: 'amber' },
+          { label: 'Sudah Diinspeksi',  value: list.filter(b => b.status === 'Sudah Dibongkar').length, color: 'green' },
+          { label: 'Total Penerimaan',  value: list.length, color: 'blue' },
         ].map((card, idx) => (
           <AnimatedCard key={card.label} delay={idx * 0.08} className="bg-white rounded-xl border border-slate-200 p-4">
             <p className="text-xs text-slate-500 uppercase tracking-wider">{card.label}</p>
@@ -375,7 +375,7 @@ export default function Bongkaran() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Cari kode, deskripsi, atau tanggal PO..."
-              className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+              className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
             />
           </div>
           <div className="flex gap-2 items-center">
@@ -395,13 +395,13 @@ export default function Bongkaran() {
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="p-4 border-b border-slate-200 bg-amber-50/50 flex items-center gap-2">
           <PackageOpen size={16} className="text-amber-600" />
-          <h2 className="font-semibold text-amber-800 text-sm">Menunggu Revisi</h2>
+          <h2 className="font-semibold text-amber-800 text-sm">Menunggu Inspeksi</h2>
           <span className="ml-auto text-xs text-amber-600 font-semibold bg-amber-100 px-2 py-0.5 rounded-full">{pending.length}</span>
         </div>
         {loading ? (
           <div className="p-4"><LoadingTable cols={4} rows={3} /></div>
         ) : pending.length === 0 ? (
-          <EmptyState icon={PackageOpen} title="Tidak ada yang perlu direvisi" description="Semua PO berstatus 'Sudah Tiba' akan muncul di sini untuk direvisi" />
+          <EmptyState icon={PackageOpen} title="Tidak ada yang perlu diinspeksi" description="Semua PO berstatus 'Sudah Tiba' akan muncul di sini untuk diinspeksi" />
         ) : (
           <div className="p-4 space-y-3">
             {pending.map(b => (
@@ -422,13 +422,13 @@ export default function Bongkaran() {
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="p-4 border-b border-slate-200 bg-emerald-50/50 flex items-center gap-2">
           <History size={16} className="text-emerald-600" />
-          <h2 className="font-semibold text-emerald-800 text-sm">History Bongkaran (Sudah Dibongkar)</h2>
+          <h2 className="font-semibold text-emerald-800 text-sm">History Inspeksi (Sudah Diinspeksi)</h2>
           <span className="ml-auto text-xs text-emerald-600 font-semibold bg-emerald-100 px-2 py-0.5 rounded-full">{history.length}</span>
         </div>
         {loading ? (
           <div className="p-4"><LoadingTable cols={4} rows={3} /></div>
         ) : history.length === 0 ? (
-          <EmptyState icon={History} title="Belum ada history" description="Bongkaran yang sudah diselesaikan akan muncul di sini" />
+          <EmptyState icon={History} title="Belum ada history" description="Inspeksi yang sudah diselesaikan akan muncul di sini" />
         ) : (
           <div className="p-4 space-y-3">
             {history.map(b => (
@@ -449,11 +449,11 @@ export default function Bongkaran() {
       <Modal
         isOpen={!!revisiTarget}
         onClose={() => setRevisiTarget(null)}
-        title={`Revisi Bongkaran — PO ${revisiTarget?.tanggal_po || ''}`}
+        title={`Inspeksi Penerimaan — PO ${revisiTarget?.tanggal_po || ''}`}
       >
         <div className="space-y-3">
           <p className="text-xs text-slate-500">
-            Cek detail tiap produk. Klik <strong className="text-slate-600">Edit</strong> pada item yang perlu diubah, lalu simpan.
+            Periksa kondisi, jumlah, dan dokumen tiap komponen. Klik <strong className="text-slate-600">Edit</strong> pada item yang perlu diubah, lalu simpan.
           </p>
           <div className="max-h-[55vh] overflow-y-auto space-y-2 pr-0.5">
             {revisiItems.map((item, index) => (
@@ -477,9 +477,9 @@ export default function Bongkaran() {
               type="button"
               onClick={handleSaveRevisi}
               disabled={saving}
-              className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-60"
+              className="flex-1 px-4 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-60"
             >
-              {saving ? 'Menyimpan…' : 'Simpan Revisi'}
+              {saving ? 'Menyimpan…' : 'Simpan Hasil Inspeksi'}
             </button>
           </div>
         </div>
@@ -490,8 +490,8 @@ export default function Bongkaran() {
         isOpen={!!selesaiTarget}
         onConfirm={handleSelesai}
         onCancel={() => setSelesaiTarget(null)}
-        title="Konfirmasi Selesai Bongkar"
-        message={`Bongkaran PO ${selesaiTarget?.tanggal_po} akan ditandai Sudah Dibongkar dan semua itemnya akan masuk ke Barang Masuk serta menambah stok. Lanjutkan?`}
+        title="Konfirmasi Selesai Inspeksi"
+        message={`Penerimaan PO ${selesaiTarget?.tanggal_po} akan ditandai Sudah Diinspeksi dan semua itemnya akan masuk ke Barang Masuk serta menambah stok. Lanjutkan?`}
         confirmLabel="Ya, Selesaikan"
       />
 
@@ -500,8 +500,8 @@ export default function Bongkaran() {
         isOpen={!!deleteTarget}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
-        title="Hapus Data Bongkaran"
-        message={`Hapus bongkaran PO ${deleteTarget?.tanggal_po}? Tindakan ini tidak dapat dibatalkan.`}
+        title="Hapus Data Inspeksi"
+        message={`Hapus data inspeksi PO ${deleteTarget?.tanggal_po}? Tindakan ini tidak dapat dibatalkan.`}
         confirmLabel="Hapus"
       />
     </div>

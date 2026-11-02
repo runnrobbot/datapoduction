@@ -13,7 +13,7 @@ const PAGE_TITLES = {
   '/masuk':        'Barang Masuk',
   '/penjualan':    'Penjualan',
   '/pre-order':    'Pre Order',
-  '/bongkaran':    'Bongkaran',
+  '/bongkaran':    'Inspeksi Penerimaan',
   '/manage-user':  'Manajemen User',
 };
 
@@ -49,15 +49,7 @@ export function Layout() {
               <motion.div key={pageTitle}
                 initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.2 }}>
-                <div className="flex items-center gap-1.5">
-                  <h1 className="text-slate-800 font-semibold" style={{ fontSize: '1rem' }}>{pageTitle}</h1>
-                  <span className="relative inline-flex h-2 w-2">
-                    <motion.span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400"
-                      animate={{ scale: [1, 1.8, 1], opacity: [0.8, 0, 0.8] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }} />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                  </span>
-                </div>
+                <h1 className="text-slate-800 font-semibold" style={{ fontSize: '1rem' }}>{pageTitle}</h1>
                 <p className="text-slate-400 hidden sm:block" style={{ fontSize: '0.75rem' }}>
                   Data Production Management System
                 </p>
@@ -75,7 +67,7 @@ export function Layout() {
                 </span>
               </div>
               <motion.div whileHover={{ scale: 1.08 }}
-                className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white shadow-sm shadow-emerald-200">
+                className="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-white shadow-sm shadow-brand-200">
                 <User size={14} />
               </motion.div>
               <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}

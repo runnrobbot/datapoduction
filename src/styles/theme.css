@@ -78,6 +78,21 @@
   --sidebar-ring: oklch(0.439 0 0);
 }
 
+/* AVTEK Orange (Burnt Orange) #E2672D — warna utama brand */
+@theme {
+  --color-brand-50:  #fdf3ee;
+  --color-brand-100: #fbe3d6;
+  --color-brand-200: #f6c4ab;
+  --color-brand-300: #f0a07a;
+  --color-brand-400: #e9804f;
+  --color-brand-500: #e5723a;
+  --color-brand-600: #e2672d;
+  --color-brand-700: #bc5222;
+  --color-brand-800: #96421d;
+  --color-brand-900: #793719;
+  --color-brand-950: #41190a;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

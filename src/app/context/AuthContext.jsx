@@ -12,8 +12,13 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  async function login(username, password) {
+  // beforeCommit (opsional): dijalankan setelah login valid, sebelum user di-set
+  // (dipakai halaman Login untuk animasi lepas landas sebelum pindah ke dashboard)
+  async function login(username, password, beforeCommit) {
     const u = await authLogin(username, password);
+    if (beforeCommit) {
+      try { await beforeCommit(u); } catch { /* animasi gagal tidak boleh menghalangi login */ }
+    }
     setUser(u);
     return u;
   }

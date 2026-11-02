@@ -37,8 +37,8 @@ export function NotificationPanel() {
             items.push({
               id: `masuk-${m.id}`,
               icon: Package,
-              color: 'text-emerald-600',
-              bg: 'bg-emerald-50',
+              color: 'text-brand-600',
+              bg: 'bg-brand-50',
               title: 'Barang Masuk',
               desc: `${m.nama_barang || m.barang_nama || 'Barang'} — ${m.qty} unit`,
               time: m.tanggal || m.created_at || null,
@@ -114,7 +114,7 @@ export function NotificationPanel() {
         <div className="absolute right-0 top-10 w-80 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <TrendingUp size={15} className="text-emerald-600" />
+              <TrendingUp size={15} className="text-brand-600" />
               <span className="font-semibold text-slate-700" style={{ fontSize: '0.875rem' }}>
                 Aktivitas Terbaru
               </span>
@@ -123,7 +123,7 @@ export function NotificationPanel() {
               {unread > 0 && (
                 <button 
                   onClick={markAsRead}
-                  className="text-[10px] uppercase tracking-wider font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md"
+                  className="text-[10px] uppercase tracking-wider font-bold text-brand-600 hover:text-brand-700 bg-brand-50 px-2 py-1 rounded-md"
                 >
                   Mark as Read
                 </button>
@@ -162,7 +162,7 @@ export function NotificationPanel() {
                         <p className={`font-medium text-slate-700 ${isUnread ? 'text-slate-800 font-bold' : ''}`} style={{ fontSize: '0.8rem' }}>
                           {n.title}
                         </p>
-                        {isUnread && <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>}
+                        {isUnread && <div className="w-1.5 h-1.5 bg-brand-500 rounded-full"></div>}
                       </div>
                       <p className="text-slate-500 truncate" style={{ fontSize: '0.75rem' }}>
                         {n.desc}

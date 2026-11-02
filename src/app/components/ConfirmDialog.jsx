@@ -5,7 +5,7 @@ export function ConfirmDialog({ isOpen, onConfirm, onCancel, title = 'Konfirmasi
 
   const btnClasses = {
     danger: 'bg-red-500 hover:bg-red-600 text-white',
-    primary: 'bg-emerald-600 hover:bg-emerald-700 text-white'
+    primary: 'bg-brand-600 hover:bg-brand-700 text-white'
   };
 
   return (

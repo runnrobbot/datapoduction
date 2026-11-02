@@ -2,8 +2,7 @@ import { useMemo, useEffect, useRef } from 'react';
 import { Link } from 'react-router';
 import { motion } from 'framer-motion';
 import {
-  Package, TrendingUp, ShoppingCart, ClipboardList,
-  ArrowRight, Boxes
+  PackageCheck, Banknote, Warehouse, PlaneLanding, ArrowRight
 } from 'lucide-react';
 import {
   BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer,
@@ -18,14 +17,14 @@ import { subscribeBarang, subscribePenjualan, subscribePreOrder, subscribeBarang
 import { StatCard } from '../components/StatCard';
 import { AnimatedCard } from '../components/motionComponents';
 import { useRealtimeFirestore } from '../hooks/useRealtime';
-import { getPOStatus, formatCurrency, formatDate } from '../utils/helpers';
+import { getPOStatus, formatCurrency, formatDate, tipeLabel, TIPE_LABEL, statusLabel } from '../utils/helpers';
 
 Chart.register(ArcElement, DoughnutController, ChartTooltip, ChartLegend);
 
 /* ─── Reusable Doughnut (Chart.js canvas) ─────────────── */
 const PALETTE = [
-  '#059669','#3b82f6','#8b5cf6','#f59e0b','#ef4444',
-  '#06b6d4','#ec4899','#84cc16','#f97316','#6366f1',
+  '#E2672D','#3b82f6','#8b5cf6','#f59e0b','#ef4444',
+  '#06b6d4','#ec4899','#78716c','#f97316','#6366f1',
 ];
 
 function DoughnutChart({ data, title, subtitle, loading, centerLabel }) {
@@ -132,7 +131,7 @@ function DoughnutChart({ data, title, subtitle, loading, centerLabel }) {
   );
 }
 
-const COLORS = ['#059669', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
+const COLORS = ['#E2672D', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -191,8 +190,8 @@ export default function Dashboard() {
     const offline = penjualanList.filter(p => p.tipe === 'offline').reduce((s, p) => s + (parseInt(p.qty) || 0), 0);
     const online = penjualanList.filter(p => p.tipe === 'online').reduce((s, p) => s + (parseInt(p.qty) || 0), 0);
     return [
-      { name: 'Offline', value: offline },
-      { name: 'Reseller', value: online }
+      { name: TIPE_LABEL.offline, value: offline },
+      { name: TIPE_LABEL.online, value: online }
     ];
   }, [penjualanList]);
 
@@ -227,7 +226,7 @@ export default function Dashboard() {
     });
     return Object.entries(counts)
       .filter(([, v]) => v > 0)
-      .map(([label, value]) => ({ label, value }));
+      .map(([label, value]) => ({ label: statusLabel(label), value }));
   }, [preOrderList]);
 
   // 3. Top 6 produk terjual (pie)
@@ -258,13 +257,13 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Terjual', value: loading ? '…' : stats.totalTerjual.toLocaleString(), icon: ShoppingCart, color: 'emerald' },
-          { label: 'Total Revenue',  value: loading ? '…' : formatCurrency(stats.totalRevenue),  icon: TrendingUp,   color: 'blue' },
-          { label: 'Total Stok',     value: loading ? '…' : stats.totalStok.toLocaleString(),     icon: Boxes,        color: 'violet' },
-          { label: 'Pre Order Aktif',value: loading ? '…' : stats.activePreOrder.toString(),      icon: ClipboardList,color: 'amber' },
+          { label: 'Total Terjual',   value: loading ? '…' : stats.totalTerjual.toLocaleString(), icon: PackageCheck },
+          { label: 'Total Revenue',   value: loading ? '…' : formatCurrency(stats.totalRevenue),  icon: Banknote },
+          { label: 'Total Stok',      value: loading ? '…' : stats.totalStok.toLocaleString(),     icon: Warehouse },
+          { label: 'Pre Order Aktif', value: loading ? '…' : stats.activePreOrder.toString(),      icon: PlaneLanding },
         ].map((card, idx) => (
           <AnimatedCard key={card.label} delay={idx * 0.08}>
-            <StatCard label={card.label} value={card.value} icon={card.icon} color={card.color} loading={loading} />
+            <StatCard label={card.label} value={card.value} icon={card.icon} loading={loading} />
           </AnimatedCard>
         ))}
       </div>
@@ -273,10 +272,10 @@ export default function Dashboard() {
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h3 className="text-slate-800 font-semibold" style={{ fontSize: '0.95rem' }}>Produk Terlaris</h3>
+              <h3 className="text-slate-800 font-semibold" style={{ fontSize: '0.95rem' }}>Komponen Terlaris</h3>
               <p className="text-slate-400" style={{ fontSize: '0.75rem' }}>Berdasarkan total unit terjual</p>
             </div>
-            <Link to="/penjualan" className="text-emerald-600 hover:text-emerald-700 flex items-center gap-1" style={{ fontSize: '0.8rem' }}>
+            <Link to="/penjualan" className="text-brand-600 hover:text-brand-700 flex items-center gap-1" style={{ fontSize: '0.8rem' }}>
               Lihat semua <ArrowRight size={13} />
             </Link>
           </div>
@@ -290,7 +289,7 @@ export default function Dashboard() {
                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="total" name="Terjual" fill="#059669" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="total" name="Terjual" fill="#E2672D" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -298,8 +297,8 @@ export default function Dashboard() {
 
         <div className="bg-white rounded-xl border border-slate-200 p-5">
           <div className="mb-5">
-            <h3 className="text-slate-800 font-semibold" style={{ fontSize: '0.95rem' }}>Saluran Penjualan</h3>
-            <p className="text-slate-400" style={{ fontSize: '0.75rem' }}>Offline vs Reseller</p>
+            <h3 className="text-slate-800 font-semibold" style={{ fontSize: '0.95rem' }}>Segmen Pelanggan</h3>
+            <p className="text-slate-400" style={{ fontSize: '0.75rem' }}>{TIPE_LABEL.offline} vs {TIPE_LABEL.online}</p>
           </div>
           {loading ? (
             <div className="h-52 bg-slate-50 rounded-lg animate-pulse" />
@@ -318,7 +317,7 @@ export default function Dashboard() {
                   dataKey="value"
                 >
                   {channelData.map((_, i) => (
-                    <Cell key={i} fill={i === 0 ? '#059669' : '#3b82f6'} />
+                    <Cell key={i} fill={i === 0 ? '#E2672D' : '#3b82f6'} />
                   ))}
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
@@ -346,8 +345,8 @@ export default function Dashboard() {
           centerLabel="PO"
         />
         <DoughnutChart
-          title="Top Produk Terjual"
-          subtitle="Top 6 produk berdasarkan unit terjual"
+          title="Top Komponen Terjual"
+          subtitle="Top 6 komponen berdasarkan unit terjual"
           data={topSalesPieData}
           loading={loading}
           centerLabel="unit"
@@ -358,7 +357,7 @@ export default function Dashboard() {
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-slate-800 font-semibold" style={{ fontSize: '0.95rem' }}>Transaksi Terbaru</h3>
-            <Link to="/penjualan" className="text-emerald-600 hover:text-emerald-700 flex items-center gap-1" style={{ fontSize: '0.8rem' }}>
+            <Link to="/penjualan" className="text-brand-600 hover:text-brand-700 flex items-center gap-1" style={{ fontSize: '0.8rem' }}>
               Lihat semua <ArrowRight size={13} />
             </Link>
           </div>
@@ -374,9 +373,9 @@ export default function Dashboard() {
                 <thead>
                   <tr className="border-b border-slate-100">
                     <th className="text-left pb-2 text-xs text-slate-400 uppercase tracking-wider">Tanggal</th>
-                    <th className="text-left pb-2 text-xs text-slate-400 uppercase tracking-wider">Produk</th>
+                    <th className="text-left pb-2 text-xs text-slate-400 uppercase tracking-wider">Komponen</th>
                     <th className="text-left pb-2 text-xs text-slate-400 uppercase tracking-wider">Qty</th>
-                    <th className="text-left pb-2 text-xs text-slate-400 uppercase tracking-wider">Kanal</th>
+                    <th className="text-left pb-2 text-xs text-slate-400 uppercase tracking-wider">Segmen</th>
                     <th className="text-right pb-2 text-xs text-slate-400 uppercase tracking-wider">Total</th>
                   </tr>
                 </thead>
@@ -385,15 +384,15 @@ export default function Dashboard() {
                     <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
                       <td className="py-2.5 text-xs text-slate-500">{formatDate(p.created_at)}</td>
                       <td className="py-2.5">
-                        <span className="text-xs font-mono text-emerald-600 font-semibold">{p.kode_barang || '—'}</span>
+                        <span className="text-xs font-mono text-brand-600 font-semibold">{p.kode_barang || '—'}</span>
                         <p className="text-xs text-slate-600 truncate max-w-[120px]">{p.nama_barang}</p>
                       </td>
                       <td className="py-2.5 text-xs text-slate-700 font-semibold">{p.qty} {p.satuan}</td>
                       <td className="py-2.5">
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          p.tipe === 'online' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'
+                          p.tipe === 'online' ? 'bg-blue-50 text-blue-600' : 'bg-brand-50 text-brand-600'
                         }`}>
-                          {p.tipe === 'online' ? 'Reseller' : 'Offline'}
+                          {tipeLabel(p.tipe)}
                         </span>
                       </td>
                       <td className="py-2.5 text-right text-xs font-semibold text-slate-700">
@@ -411,7 +410,7 @@ export default function Dashboard() {
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-slate-800 font-semibold" style={{ fontSize: '0.9rem' }}>Stok Menipis</h3>
-              <Link to="/barang" className="text-xs text-emerald-600 hover:underline">Lihat</Link>
+              <Link to="/barang" className="text-xs text-brand-600 hover:underline">Lihat</Link>
             </div>
             {loading ? (
               <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-8 bg-slate-50 rounded animate-pulse" />)}</div>
@@ -439,7 +438,7 @@ export default function Dashboard() {
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-slate-800 font-semibold" style={{ fontSize: '0.9rem' }}>PO Mendesak</h3>
-              <Link to="/pre-order" className="text-xs text-emerald-600 hover:underline">Lihat</Link>
+              <Link to="/pre-order" className="text-xs text-brand-600 hover:underline">Lihat</Link>
             </div>
             {loading ? (
               <div className="space-y-2">{[1,2].map(i => <div key={i} className="h-8 bg-slate-50 rounded animate-pulse" />)}</div>
@@ -455,7 +454,7 @@ export default function Dashboard() {
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-slate-700 truncate">
                           {firstItem?.kode_barang
-                            ? <span className="font-mono text-emerald-600">{firstItem.kode_barang}</span>
+                            ? <span className="font-mono text-brand-600">{firstItem.kode_barang}</span>
                             : <span className="text-slate-400">Tanggal PO</span>
                           }
                           {itemCount > 1 && <span className="text-slate-400 ml-1">+{itemCount - 1} item</span>}

@@ -113,11 +113,11 @@ export function RealtimeDot() {
   return (
     <span className="relative inline-flex h-2 w-2 ml-1.5">
       <motion.span
-        className="absolute inline-flex h-full w-full rounded-full bg-emerald-400"
+        className="absolute inline-flex h-full w-full rounded-full bg-brand-400"
         animate={{ scale: [1, 1.8, 1], opacity: [0.8, 0, 0.8] }}
         transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
       />
-      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+      <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-500" />
     </span>
   );
 }

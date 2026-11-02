@@ -76,6 +76,34 @@ export function getPOStatus(tanggalPO) {
 }
 
 
+/**
+ * Label tampilan untuk segmen pelanggan.
+ * Nilai yang disimpan di Firestore tetap 'offline' / 'online' agar data lama tetap terbaca.
+ */
+export const TIPE_LABEL = {
+  offline: 'Militer & Pemerintah',
+  online:  'Komersial',
+};
+
+export function tipeLabel(tipe) {
+  return tipe === 'online' ? TIPE_LABEL.online : TIPE_LABEL.offline;
+}
+
+/**
+ * Label tampilan untuk status PO & inspeksi penerimaan.
+ * Nilai yang disimpan di Firestore tidak diubah.
+ */
+export const STATUS_LABEL = {
+  'Masih Dijalan':   'Dalam Pengiriman',
+  'Sudah Tiba':      'Sudah Tiba',
+  'Sudah Dibongkar': 'Sudah Diinspeksi',
+  'Menunggu Revisi': 'Menunggu Inspeksi',
+};
+
+export function statusLabel(status) {
+  return STATUS_LABEL[status] || status;
+}
+
 export function truncate(str, n = 30) {
   if (!str) return '-';
   return str.length > n ? str.slice(0, n) + '…' : str;

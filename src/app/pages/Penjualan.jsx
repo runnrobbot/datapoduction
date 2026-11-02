@@ -15,7 +15,7 @@ import { EmptyState } from '../components/EmptyState';
 import { LoadingTable } from '../components/LoadingTable';
 import { SearchDropdown } from '../components/SearchDropdown';
 import { AnimatedCard } from '../components/motionComponents';
-import { formatDate, formatCurrency } from '../utils/helpers';
+import { formatDate, formatCurrency, tipeLabel, TIPE_LABEL } from '../utils/helpers';
 import { parseFile, parseCAFile } from '../utils/importUtils';
 import { exportToCSV, exportToExcel } from '../utils/exportUtils';
 
@@ -291,7 +291,7 @@ export default function Penjualan() {
       'Nama Barang': p.nama_barang,
       Qty: p.qty,
       Satuan: p.satuan,
-      Tipe: p.tipe === 'online' ? 'Reseller' : 'Offline',
+      Segmen: tipeLabel(p.tipe),
       Harga: p.harga,
       Total: parseInt(p.qty) * parseFloat(p.harga),
       Keterangan: p.keterangan || ''
@@ -305,7 +305,7 @@ export default function Penjualan() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {[
-          { label: 'Total Unit Terjual', value: summary.totalQty.toLocaleString(), sub: filterTipe !== 'all' ? `filter: ${filterTipe}` : null, color: 'slate' },
+          { label: 'Total Unit Terjual', value: summary.totalQty.toLocaleString(), sub: filterTipe !== 'all' ? `filter: ${tipeLabel(filterTipe)}` : null, color: 'slate' },
           { label: 'Total Revenue',      value: formatCurrency(summary.totalRevenue), color: 'emerald' },
           { label: 'Jumlah Transaksi',   value: filtered.length.toLocaleString(), color: 'slate', span: true },
         ].map((card, idx) => (
@@ -313,7 +313,7 @@ export default function Penjualan() {
             <p className="text-xs text-slate-500 uppercase tracking-wider">{card.label}</p>
             <motion.p
               key={card.value}
-              className={`text-2xl font-bold mt-1 ${card.color === 'emerald' ? 'text-emerald-600' : 'text-slate-800'}`}
+              className={`text-2xl font-bold mt-1 ${card.color === 'emerald' ? 'text-brand-600' : 'text-slate-800'}`}
               initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.25 }}
@@ -336,17 +336,17 @@ export default function Penjualan() {
                 value={search}
                 onChange={e => { setSearch(e.target.value); setPage(1); }}
                 placeholder="Cari nama atau kode barang..."
-                className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+                className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
               />
             </div>
             <select
               value={filterTipe}
               onChange={e => { setFilterTipe(e.target.value); setPage(1); }}
-              className="shrink-0 px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+              className="shrink-0 px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30"
             >
-              <option value="all">Semua Tipe</option>
-              <option value="offline">Offline</option>
-              <option value="online">Reseller</option>
+              <option value="all">Semua Segmen</option>
+              <option value="offline">{TIPE_LABEL.offline}</option>
+              <option value="online">{TIPE_LABEL.online}</option>
             </select>
           </div>
           {/* Row 2: Date range + action buttons */}
@@ -379,7 +379,7 @@ export default function Penjualan() {
             </div>
             <button
               onClick={openAdd}
-              className="shrink-0 flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-medium"
+              className="shrink-0 flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-brand-600 text-white hover:bg-brand-700 font-medium"
             >
               <Plus size={14} /> <span className="hidden sm:inline">Catat Penjualan</span><span className="sm:hidden">Catat</span>
             </button>
@@ -392,7 +392,7 @@ export default function Penjualan() {
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                {['Tanggal', 'Kode', 'Nama Barang', 'Qty', 'Tipe', 'Harga', 'Total', 'Aksi'].map(h => (
+                {['Tanggal', 'Kode / P/N', 'Nama Barang', 'Qty', 'Segmen', 'Harga', 'Total', 'Aksi'].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-xs text-slate-500 uppercase tracking-wider font-semibold whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -408,7 +408,7 @@ export default function Penjualan() {
                       title={search || filterTipe !== 'all' ? 'Tidak ada hasil' : 'Belum ada data penjualan'}
                       description="Klik Catat Penjualan untuk menambahkan transaksi"
                       action={(!search && filterTipe === 'all') && (
-                        <button onClick={openAdd} className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">
+                        <button onClick={openAdd} className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-brand-600 text-white hover:bg-brand-700">
                           <Plus size={14} /> Catat Penjualan
                         </button>
                       )}
@@ -420,7 +420,7 @@ export default function Penjualan() {
                   <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{formatDate(p.created_at)}</td>
                     <td className="px-4 py-3">
-                      <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
+                      <span className="text-xs font-mono font-bold text-brand-600 bg-brand-50 px-2 py-1 rounded-md">
                         {p.kode_barang || '—'}
                       </span>
                     </td>
@@ -433,9 +433,9 @@ export default function Penjualan() {
                     </td>
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        p.tipe === 'online' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-700'
+                        p.tipe === 'online' ? 'bg-blue-50 text-blue-600' : 'bg-brand-50 text-brand-700'
                       }`}>
-                        {p.tipe === 'online' ? 'Reseller' : 'Offline'}
+                        {tipeLabel(p.tipe)}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600">{formatCurrency(p.harga)}</td>
@@ -505,14 +505,14 @@ export default function Penjualan() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-slate-600 mb-1.5">Tipe Penjualan</label>
+              <label className="block text-sm text-slate-600 mb-1.5">Segmen Pelanggan</label>
               <select
                 value={tipe}
                 onChange={e => setTipe(e.target.value)}
-                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
               >
-                <option value="offline">Offline</option>
-                <option value="online">Reseller</option>
+                <option value="offline">{TIPE_LABEL.offline}</option>
+                <option value="online">{TIPE_LABEL.online}</option>
               </select>
             </div>
             <div>
@@ -525,7 +525,7 @@ export default function Penjualan() {
                 min="1"
                 max={selectedBarang?.stok || undefined}
                 required
-                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
               />
             </div>
           </div>
@@ -539,14 +539,14 @@ export default function Penjualan() {
               placeholder="0"
               min="0"
               required
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
             />
           </div>
 
           {qty && harga && (
-            <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-4 py-2 flex items-center justify-between">
+            <div className="bg-brand-50 border border-brand-100 rounded-lg px-4 py-2 flex items-center justify-between">
               <span className="text-sm text-slate-600">Total Transaksi</span>
-              <span className="font-bold text-emerald-700">{formatCurrency(parseInt(qty || 0) * parseFloat(harga || 0))}</span>
+              <span className="font-bold text-brand-700">{formatCurrency(parseInt(qty || 0) * parseFloat(harga || 0))}</span>
             </div>
           )}
 
@@ -557,7 +557,7 @@ export default function Penjualan() {
               value={keterangan}
               onChange={e => setKeterangan(e.target.value)}
               placeholder="Opsional"
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
             />
           </div>
 
@@ -567,7 +567,7 @@ export default function Penjualan() {
               Batal
             </button>
             <button type="submit" disabled={saving}
-              className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-60">
+              className="flex-1 px-4 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-60">
               {saving ? 'Menyimpan…' : 'Catat Penjualan'}
             </button>
           </div>
@@ -604,7 +604,7 @@ export default function Penjualan() {
                     value={caBarangSearch}
                     onChange={e => setCaBarangSearch(e.target.value)}
                     placeholder="Ketik nama atau kode barang..."
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                     autoFocus
                   />
                 </div>
@@ -623,7 +623,7 @@ export default function Penjualan() {
                           onClick={() => setCaSelectedBarang(b)}
                           className={`w-full flex items-center justify-between px-4 py-3 text-left text-sm border-b border-slate-100 last:border-0 transition-colors ${
                             caSelectedBarang?.id === b.id
-                              ? 'bg-emerald-50 border-l-2 border-l-emerald-500'
+                              ? 'bg-brand-50 border-l-2 border-l-brand-500'
                               : 'hover:bg-slate-50'
                           }`}
                         >
@@ -650,8 +650,8 @@ export default function Penjualan() {
 
                 {/* Selected info */}
                 {caSelectedBarang && (
-                  <div className="flex items-center gap-2 px-3 py-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-800">
-                    <span className="text-emerald-500">✓</span>
+                  <div className="flex items-center gap-2 px-3 py-2.5 bg-brand-50 border border-brand-200 rounded-lg text-sm text-brand-800">
+                    <span className="text-brand-500">✓</span>
                     <span><strong>{caSelectedBarang.nama}</strong> dipilih</span>
                   </div>
                 )}
@@ -666,7 +666,7 @@ export default function Penjualan() {
                   <button
                     onClick={() => { if (!caSelectedBarang) { toast.error('Pilih barang dulu'); return; } setCaStep('preview'); }}
                     disabled={!caSelectedBarang}
-                    className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50"
+                    className="flex-1 px-4 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-50"
                   >
                     Lanjut → Preview
                   </button>
@@ -675,13 +675,13 @@ export default function Penjualan() {
             ) : (
               /* ── Step 2: Preview sebelum import ── */
               <>
-                <div className="flex items-center gap-3 px-4 py-3 bg-emerald-50 border border-emerald-100 rounded-lg">
+                <div className="flex items-center gap-3 px-4 py-3 bg-brand-50 border border-brand-100 rounded-lg">
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs text-emerald-600 font-medium">Barang</div>
-                    <div className="text-sm font-semibold text-emerald-900 truncate">{caSelectedBarang?.nama}</div>
+                    <div className="text-xs text-brand-600 font-medium">Barang</div>
+                    <div className="text-sm font-semibold text-brand-900 truncate">{caSelectedBarang?.nama}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className="text-xs text-emerald-600">{caImport.rows.length} transaksi</div>
+                    <div className="text-xs text-brand-600">{caImport.rows.length} transaksi</div>
                     {caImport.skipped > 0 && (
                       <div className="text-xs text-slate-400">{caImport.skipped} dilewati</div>
                     )}
@@ -726,7 +726,7 @@ export default function Penjualan() {
                   <button
                     onClick={executeImport}
                     disabled={saving}
-                    className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-60"
+                    className="flex-1 px-4 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-60"
                   >
                     {saving ? 'Mengimpor…' : `Import ${caImport.rows.length} Transaksi`}
                   </button>
@@ -746,7 +746,7 @@ export default function Penjualan() {
                   { key: 'nama_barang', label: 'Nama Barang' },
                   { key: 'kode_barang', label: 'Kode Barang' },
                   { key: 'qty', label: 'Qty / Jumlah' },
-                  { key: 'tipe', label: 'Tipe (offline/online)' },
+                  { key: 'tipe', label: 'Segmen (offline/online)' },
                   { key: 'harga', label: 'Harga Satuan' },
                   { key: 'keterangan', label: 'Keterangan' }
                 ].map(f => (
@@ -755,7 +755,7 @@ export default function Penjualan() {
                     <select
                       value={importMap[f.key]}
                       onChange={e => setImportMap(m => ({ ...m, [f.key]: e.target.value }))}
-                      className="w-full px-2.5 py-2 border border-slate-200 rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      className="w-full px-2.5 py-2 border border-slate-200 rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                     >
                       <option value="">— Tidak dipetakan —</option>
                       {importColumns.map(c => <option key={c} value={c}>{c}</option>)}
@@ -768,7 +768,7 @@ export default function Penjualan() {
                   <table className="w-full text-xs">
                     <thead className="bg-slate-50">
                       <tr>
-                        {['Nama', 'Kode', 'Qty', 'Tipe', 'Harga'].map(h => (
+                        {['Nama', 'Kode / P/N', 'Qty', 'Segmen', 'Harga'].map(h => (
                           <th key={h} className="px-3 py-2 text-left text-slate-500">{h}</th>
                         ))}
                       </tr>
@@ -793,7 +793,7 @@ export default function Penjualan() {
                   Batal
                 </button>
                 <button onClick={executeImport} disabled={saving}
-                  className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-60">
+                  className="flex-1 px-4 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-60">
                   {saving ? 'Mengimpor…' : `Import ${importData.length} Data`}
                 </button>
               </div>

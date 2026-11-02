@@ -2,7 +2,7 @@ import { NavLink } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   LayoutDashboard, Package, PackagePlus, ShoppingCart,
-  ClipboardList, X, Layers, Users, PackageOpen
+  ClipboardList, X, Users, PackageOpen
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -12,7 +12,7 @@ const NAV_ITEMS = [
   { to: '/masuk',       icon: PackagePlus,     label: 'Barang Masuk' },
   { to: '/penjualan',   icon: ShoppingCart,    label: 'Penjualan' },
   { to: '/pre-order',   icon: ClipboardList,   label: 'Pre Order' },
-  { to: '/bongkaran',   icon: PackageOpen,     label: 'Bongkaran' },
+  { to: '/bongkaran',   icon: PackageOpen,     label: 'Inspeksi Penerimaan' },
   { to: '/manage-user', icon: Users,           label: 'Manage User', superOnly: true },
 ];
 
@@ -52,16 +52,13 @@ export function Sidebar({ isOpen, onClose }) {
             transition={{ delay: 0.05, duration: 0.4 }}
             className="flex items-center gap-2.5"
           >
-            <motion.div
-              whileHover={{ rotate: 8, scale: 1.08 }}
-              className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center"
-            >
-              <Layers size={16} className="text-white" />
-            </motion.div>
-            <div>
-              <span className="text-slate-800 font-bold tracking-tight" style={{ fontSize: '0.95rem' }}>DataPro</span>
-              <span className="text-emerald-500 font-bold" style={{ fontSize: '0.95rem' }}>.</span>
-            </div>
+            <motion.img
+              src="/logo-utama.png"
+              alt="Avtek Transutama"
+              whileHover={{ scale: 1.08 }}
+              className="w-10 h-10 object-contain"
+            />
+            <span className="text-slate-800 font-bold tracking-tight" style={{ fontSize: '0.95rem' }}>DataPro</span>
           </motion.div>
           <motion.button whileTap={{ scale: 0.85 }}
             onClick={onClose}
@@ -87,7 +84,7 @@ export function Sidebar({ isOpen, onClose }) {
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 ${
                       isActive
-                        ? 'bg-emerald-50 text-emerald-700 font-semibold border border-emerald-100'
+                        ? 'bg-brand-50 text-brand-700 font-semibold border border-brand-100'
                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
                     }`
                   }
@@ -98,16 +95,9 @@ export function Sidebar({ isOpen, onClose }) {
                         animate={{ scale: isActive ? 1.1 : 1 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <item.icon size={16} className={isActive ? 'text-emerald-600' : 'text-slate-400'} />
+                        <item.icon size={16} className={isActive ? 'text-brand-600' : 'text-slate-400'} />
                       </motion.span>
                       <span>{item.label}</span>
-                      {isActive && (
-                        <motion.span
-                          layoutId="active-dot"
-                          className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500"
-                          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                        />
-                      )}
                     </>
                   )}
                 </NavLink>
@@ -118,7 +108,7 @@ export function Sidebar({ isOpen, onClose }) {
 
         <div className="px-5 py-4 border-t border-slate-100">
           <p className="text-xs text-slate-400">Data Production v2.0</p>
-          <p className="text-xs text-slate-300">Powered by Glory8</p>
+          <p className="text-xs text-slate-300">Powered by Avtek Transutama</p>
         </div>
       </motion.aside>
     </>

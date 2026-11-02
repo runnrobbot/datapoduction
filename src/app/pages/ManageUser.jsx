@@ -116,7 +116,7 @@ export default function ManageUser() {
             <RefreshCw size={14} />
           </button>
           <button onClick={openAdd}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-medium">
+            className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-brand-600 text-white hover:bg-brand-700 font-medium">
             <Plus size={14} /> Tambah User
           </button>
         </div>
@@ -147,7 +147,7 @@ export default function ManageUser() {
                       <div>
                         <p className="text-sm font-medium text-slate-800">{u.nama}</p>
                         {u.id === currentUser?.id && (
-                          <span className="text-xs text-emerald-600 font-medium">● Anda</span>
+                          <span className="text-xs text-brand-600 font-medium">● Anda</span>
                         )}
                       </div>
                     </div>
@@ -192,14 +192,14 @@ export default function ManageUser() {
             <input type="text" value={form.nama}
               onChange={e => setForm(f => ({ ...f, nama: e.target.value }))}
               placeholder="Cth: Budi Santoso" required
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400" />
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400" />
           </div>
           <div>
             <label className="block text-sm text-slate-600 mb-1.5">Username <span className="text-red-500">*</span></label>
             <input type="text" value={form.username}
               onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
               placeholder="Cth: budi123" required
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400" />
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400" />
           </div>
           <div>
             <label className="block text-sm text-slate-600 mb-1.5">
@@ -211,7 +211,7 @@ export default function ManageUser() {
                 onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                 placeholder={editTarget ? 'Biarkan kosong jika tidak diubah' : 'Masukkan password'}
                 required={!editTarget}
-                className="w-full px-3 py-2.5 pr-10 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400" />
+                className="w-full px-3 py-2.5 pr-10 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400" />
               <button type="button" onClick={() => setShowPass(v => !v)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                 {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -222,7 +222,7 @@ export default function ManageUser() {
             <label className="block text-sm text-slate-600 mb-1.5">Role <span className="text-red-500">*</span></label>
             <select value={form.role}
               onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400">
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400">
               <option value="admin">Admin</option>
               <option value="super_admin">Super Admin</option>
             </select>
@@ -233,7 +233,7 @@ export default function ManageUser() {
               Batal
             </button>
             <button type="submit" disabled={saving}
-              className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-60">
+              className="flex-1 px-4 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-60">
               {saving ? 'Menyimpan…' : editTarget ? 'Perbarui' : 'Tambah User'}
             </button>
           </div>

@@ -49,9 +49,9 @@ export function SearchDropdown({ barangList, value, onChange, placeholder = 'Car
   return (
     <div ref={containerRef} className="relative">
       {selected ? (
-        <div className="flex items-center justify-between px-3 py-2.5 border border-slate-200 rounded-lg bg-emerald-50 border-emerald-300">
+        <div className="flex items-center justify-between px-3 py-2.5 border border-slate-200 rounded-lg bg-brand-50 border-brand-300">
           <div>
-            <span className="text-sm text-emerald-700 font-mono font-semibold">{selected.kode || '—'}</span>
+            <span className="text-sm text-brand-700 font-mono font-semibold">{selected.kode || '—'}</span>
             <span className="text-sm text-slate-700 ml-2">{selected.nama}</span>
             <span className="ml-2 text-xs text-slate-500">Stok: {selected.stok}</span>
           </div>
@@ -68,7 +68,7 @@ export function SearchDropdown({ barangList, value, onChange, placeholder = 'Car
             onChange={e => { setQuery(e.target.value); setOpen(true); }}
             onFocus={() => setOpen(true)}
             placeholder={placeholder}
-            className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-all"
+            className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition-all"
           />
         </div>
       )}
@@ -88,7 +88,7 @@ export function SearchDropdown({ barangList, value, onChange, placeholder = 'Car
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-xs font-mono font-semibold text-emerald-600">{b.kode || '—'}</span>
+                      <span className="text-xs font-mono font-semibold text-brand-600">{b.kode || '—'}</span>
                       <span className="text-sm text-slate-700 ml-2">{b.nama}</span>
                     </div>
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${

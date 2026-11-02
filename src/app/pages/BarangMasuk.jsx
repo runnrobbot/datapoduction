@@ -141,7 +141,7 @@ export default function BarangMasuk() {
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1); }}
               placeholder="Cari nama, kode, atau keterangan..."
-              className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+              className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
             />
           </div>
           <div className="flex gap-2 items-center">
@@ -155,7 +155,7 @@ export default function BarangMasuk() {
             </button>
             <button
               onClick={openAdd}
-              className="shrink-0 flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-medium"
+              className="shrink-0 flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-brand-600 text-white hover:bg-brand-700 font-medium"
             >
               <Plus size={14} /> <span className="hidden sm:inline">Tambah Masuk</span><span className="sm:hidden">Masuk</span>
             </button>
@@ -187,7 +187,7 @@ export default function BarangMasuk() {
                       title={search ? 'Tidak ada hasil' : 'Belum ada catatan barang masuk'}
                       description="Klik Tambah Masuk untuk mencatat penerimaan stok"
                       action={!search && (
-                        <button onClick={openAdd} className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">
+                        <button onClick={openAdd} className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-brand-600 text-white hover:bg-brand-700">
                           <Plus size={14} /> Tambah Masuk
                         </button>
                       )}
@@ -199,7 +199,7 @@ export default function BarangMasuk() {
                   <tr key={m.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{formatDate(m.created_at)}</td>
                     <td className="px-4 py-3">
-                      <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
+                      <span className="text-xs font-mono font-bold text-brand-600 bg-brand-50 px-2 py-1 rounded-md">
                         {m.kode_barang || '—'}
                       </span>
                     </td>
@@ -263,7 +263,7 @@ export default function BarangMasuk() {
             <label className="block text-sm text-slate-600 mb-1.5">Barang <span className="text-red-500">*</span></label>
             {editTarget ? (
               <div className="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700">
-                <span className="font-mono font-semibold text-emerald-600">{selectedBarang?.kode || '—'}</span>
+                <span className="font-mono font-semibold text-brand-600">{selectedBarang?.kode || '—'}</span>
                 <span className="ml-2">{selectedBarang?.nama}</span>
               </div>
             ) : (
@@ -299,7 +299,7 @@ export default function BarangMasuk() {
               placeholder="Masukkan jumlah"
               min="1"
               required
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
             />
           </div>
 
@@ -310,7 +310,7 @@ export default function BarangMasuk() {
               onChange={e => setKeterangan(e.target.value)}
               placeholder="Cth: Pembelian dari supplier, dst..."
               rows={2}
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 resize-none"
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 resize-none"
             />
           </div>
 
@@ -320,7 +320,7 @@ export default function BarangMasuk() {
               Batal
             </button>
             <button type="submit" disabled={saving}
-              className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-60">
+              className="flex-1 px-4 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-60">
               {saving ? 'Menyimpan…' : editTarget ? 'Perbarui' : 'Simpan'}
             </button>
           </div>

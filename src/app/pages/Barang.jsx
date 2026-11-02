@@ -190,7 +190,7 @@ export default function Barang() {
                 value={search}
                 onChange={e => { setSearch(e.target.value); setPage(1); }}
                 placeholder="Cari nama atau kode barang..."
-                className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+                className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
               />
             </div>
           </div>
@@ -217,7 +217,7 @@ export default function Barang() {
             </div>
             <button
               onClick={openAdd}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-medium"
+              className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-brand-600 text-white hover:bg-brand-700 transition-colors font-medium"
             >
               <Plus size={14} /> Tambah Barang
             </button>
@@ -252,7 +252,7 @@ export default function Barang() {
                       title={search ? 'Tidak ada hasil pencarian' : 'Belum ada data barang'}
                       description={search ? `Tidak ada barang dengan kata kunci "${search}"` : 'Klik tombol Tambah Barang untuk menambahkan data'}
                       action={!search && (
-                        <button onClick={openAdd} className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">
+                        <button onClick={openAdd} className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-brand-600 text-white hover:bg-brand-700">
                           <Plus size={14} /> Tambah Barang
                         </button>
                       )}
@@ -263,7 +263,7 @@ export default function Barang() {
                 paginated.map(b => (
                   <tr key={b.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3">
-                      <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
+                      <span className="text-xs font-mono font-bold text-brand-600 bg-brand-50 px-2 py-1 rounded-md">
                         {b.kode || '—'}
                       </span>
                     </td>
@@ -330,7 +330,7 @@ export default function Barang() {
                     onClick={() => setPage(p)}
                     className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs transition-colors ${
                       page === p
-                        ? 'bg-emerald-600 text-white border border-emerald-600'
+                        ? 'bg-brand-600 text-white border border-brand-600'
                         : 'border border-slate-200 text-slate-600 hover:bg-white'
                     }`}
                   >
@@ -357,13 +357,13 @@ export default function Barang() {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm text-slate-600 mb-1.5">Kode Barang</label>
+            <label className="block text-sm text-slate-600 mb-1.5">Kode Barang / Part Number</label>
             <input
               type="text"
               value={form.kode}
               onChange={e => setForm(f => ({ ...f, kode: e.target.value }))}
-              placeholder="Cth: BRG-001"
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+              placeholder="Cth: P/N 3214552-4"
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
             />
           </div>
           <div>
@@ -372,9 +372,9 @@ export default function Barang() {
               type="text"
               value={form.nama}
               onChange={e => setForm(f => ({ ...f, nama: e.target.value }))}
-              placeholder="Masukkan nama barang"
+              placeholder="Cth: Starter Generator, Propeller Blade"
               required
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -383,9 +383,9 @@ export default function Barang() {
               <select
                 value={form.satuan}
                 onChange={e => setForm(f => ({ ...f, satuan: e.target.value }))}
-                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 bg-white"
+                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 bg-white"
               >
-                {['pcs', 'unit', 'box', 'karton', 'lusin', 'kg', 'liter', 'meter', 'roll', 'set'].map(s => (
+                {[...new Set(['pcs', 'ea', 'unit', 'set', 'kit', 'assy', 'pair', 'lot', 'box', 'roll', 'kg', 'liter', 'gallon', 'meter', form.satuan].filter(Boolean))].map(s => (
                   <option key={s} value={s}>{s.toUpperCase()}</option>
                 ))}
               </select>
@@ -398,7 +398,7 @@ export default function Barang() {
                 onChange={e => setForm(f => ({ ...f, harga_jual: e.target.value }))}
                 placeholder="0"
                 min="0"
-                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
               />
             </div>
           </div>
@@ -413,7 +413,7 @@ export default function Barang() {
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-60"
+              className="flex-1 px-4 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors disabled:opacity-60"
             >
               {saving ? 'Menyimpan…' : editTarget ? 'Perbarui' : 'Simpan'}
             </button>
@@ -447,7 +447,7 @@ export default function Barang() {
                 <select
                   value={columnMap[field.key]}
                   onChange={e => setColumnMap(m => ({ ...m, [field.key]: e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
                 >
                   <option value="">— Tidak dipetakan —</option>
                   {importColumns.map(c => (
@@ -493,7 +493,7 @@ export default function Barang() {
             <button
               onClick={executeImport}
               disabled={saving || !columnMap.nama}
-              className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-60"
+              className="flex-1 px-4 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-60"
             >
               {saving ? 'Mengimpor…' : `Import ${importData.length} Data`}
             </button>

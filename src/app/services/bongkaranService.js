@@ -89,7 +89,7 @@ export async function selesaikanBongkaran(bongkaranId, bongkaranData) {
         nama_barang: item.deskripsi   || '',
         satuan,
         qty:         qtyMasuk,
-        keterangan:  item.catatan || ('Dari Bongkaran PO ' + bongkaranData.tanggal_po),
+        keterangan:  item.catatan || ('Dari Inspeksi Penerimaan PO ' + bongkaranData.tanggal_po),
         created_at:  serverTimestamp(),
       });
 

@@ -16,7 +16,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { LoadingTable } from '../components/LoadingTable';
 import { AnimatedCard } from '../components/motionComponents';
-import { getPOStatus, formatDate } from '../utils/helpers';
+import { getPOStatus, formatDate, statusLabel } from '../utils/helpers';
 
 const KET_STATUS_OPTIONS = ['Masih Dijalan', 'Sudah Tiba', 'Sudah Dibongkar'];
 
@@ -105,7 +105,7 @@ function ItemFormRow({ item, index, updateItem, removeItem, barangList, allowRem
               onFocus={() => setOpen(true)}
               placeholder="Cari kode atau nama barang..."
               required
-              className="w-full pl-8 pr-16 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+              className="w-full pl-8 pr-16 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
             />
             <div className="absolute right-2 flex items-center gap-1">
               {query && (
@@ -131,9 +131,9 @@ function ItemFormRow({ item, index, updateItem, removeItem, barangList, allowRem
                     key={b.id}
                     type="button"
                     onMouseDown={() => selectBarang(b)}
-                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-emerald-50 transition-colors border-b border-slate-50 last:border-0"
+                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-brand-50 transition-colors border-b border-slate-50 last:border-0"
                   >
-                    <span className="font-mono text-xs font-bold text-emerald-600 mr-2 bg-emerald-50 px-1.5 py-0.5 rounded">
+                    <span className="font-mono text-xs font-bold text-brand-600 mr-2 bg-brand-50 px-1.5 py-0.5 rounded">
                       {b.kode || '—'}
                     </span>
                     <span className="text-slate-700">{b.nama}</span>
@@ -146,7 +146,7 @@ function ItemFormRow({ item, index, updateItem, removeItem, barangList, allowRem
         </div>
         {item.kode_barang && (
           <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-500">
-            <span className="font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{item.kode_barang}</span>
+            <span className="font-mono font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded">{item.kode_barang}</span>
             <span className="truncate">{item.deskripsi}</span>
           </div>
         )}
@@ -154,13 +154,13 @@ function ItemFormRow({ item, index, updateItem, removeItem, barangList, allowRem
 
       <div className="grid grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm text-slate-600 mb-1.5">Box</label>
+          <label className="block text-sm text-slate-600 mb-1.5">Kemasan</label>
           <input
             type="text"
             value={item.box}
             onChange={e => updateItem(index, { box: e.target.value })}
-            placeholder="Cth: Box A"
-            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+            placeholder="Cth: Crate 01"
+            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
           />
         </div>
         <div>
@@ -169,8 +169,8 @@ function ItemFormRow({ item, index, updateItem, removeItem, barangList, allowRem
             type="text"
             value={item.isi || ''}
             onChange={e => updateItem(index, { isi: e.target.value })}
-            placeholder="Cth: 10 pcs/box"
-            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+            placeholder="Cth: 2 unit/crate"
+            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
           />
         </div>
         <div>
@@ -182,7 +182,7 @@ function ItemFormRow({ item, index, updateItem, removeItem, barangList, allowRem
             placeholder="0"
             min="1"
             required
-            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
           />
         </div>
       </div>
@@ -193,8 +193,8 @@ function ItemFormRow({ item, index, updateItem, removeItem, barangList, allowRem
           type="text"
           value={item.catatan}
           onChange={e => updateItem(index, { catatan: e.target.value })}
-          placeholder="Informasi tambahan..."
-          className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+          placeholder="Cth: S/N, kondisi (NEW/OH/SV), sertifikat"
+          className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
         />
       </div>
     </div>
@@ -259,7 +259,7 @@ function POTable({ data, loading, emptyTitle, emptyDesc, onEdit, onDelete, isHis
                     <td className={`px-4 py-3 align-top ${idx !== items.length - 1 ? 'border-b border-slate-100' : ''}`}>
                       <div className="flex gap-3 text-sm">
                         <div className="min-w-[60px]">
-                          <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
+                          <span className="text-xs font-mono font-bold text-brand-600 bg-brand-50 px-2 py-1 rounded-md">
                             {item.kode_barang || '—'}
                           </span>
                         </div>
@@ -267,7 +267,7 @@ function POTable({ data, loading, emptyTitle, emptyDesc, onEdit, onDelete, isHis
                           <p className="text-slate-800 font-medium">{item.deskripsi || '—'}</p>
                           {(item.box || item.isi || item.catatan) && (
                             <p className="text-xs text-slate-400 mt-0.5">
-                              {item.box && `Box: ${item.box} `}
+                              {item.box && `Kemasan: ${item.box} `}
                               {item.isi && `• Isi: ${item.isi} `}
                               {item.catatan && `• Catatan: ${item.catatan}`}
                             </p>
@@ -276,13 +276,13 @@ function POTable({ data, loading, emptyTitle, emptyDesc, onEdit, onDelete, isHis
                       </div>
                     </td>
                     <td className={`px-4 py-3 align-top font-bold text-slate-700 whitespace-nowrap border-r border-slate-100/50 ${idx !== items.length - 1 ? 'border-b border-slate-100' : ''}`}>
-                      {item.qty || 0} <span className="text-xs font-medium text-slate-500">pcs</span>
+                      {item.qty || 0} <span className="text-xs font-medium text-slate-500">unit</span>
                     </td>
                     {idx === 0 && (
                       <td className="px-4 py-3 align-top" rowSpan={items.length}>
                         <div className="flex items-baseline gap-1">
                           <span className="text-sm font-bold text-slate-700">{totalQty}</span>
-                          <span className="text-xs font-medium text-slate-500">pcs</span>
+                          <span className="text-xs font-medium text-slate-500">unit</span>
                         </div>
                       </td>
                     )}
@@ -291,7 +291,7 @@ function POTable({ data, loading, emptyTitle, emptyDesc, onEdit, onDelete, isHis
                         {po.keterangan_status ? (
                           <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold ${KET_STATUS_STYLE[po.keterangan_status] || 'bg-slate-50 text-slate-500 border border-slate-200'}`}>
                             <Truck size={10} />
-                            {po.keterangan_status}
+                            {statusLabel(po.keterangan_status)}
                           </span>
                         ) : (
                           <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold ${statusBadgeClass(po.status.color)}`}>
@@ -476,7 +476,7 @@ export default function PreOrder() {
             tanggal_po: form.tanggal_po,
             items: form.items.map(i => ({ ...i })),
           });
-          toast.success('Pre Order diperbarui & masuk ke Bongkaran');
+          toast.success('Pre Order diperbarui & masuk ke Inspeksi Penerimaan');
         } else {
           toast.success('Pre Order berhasil diperbarui');
         }
@@ -545,16 +545,16 @@ export default function PreOrder() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Cari kode atau deskripsi..."
-                className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+                className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
               />
             </div>
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              className="shrink-0 px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+              className="shrink-0 px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30"
             >
               {STATUS_FILTER.map(s => (
-                <option key={s} value={s}>{s === 'all' ? 'Semua Status' : s}</option>
+                <option key={s} value={s}>{s === 'all' ? 'Semua Status' : statusLabel(s)}</option>
               ))}
             </select>
           </div>
@@ -570,7 +570,7 @@ export default function PreOrder() {
             </button>
             <button
               onClick={openAdd}
-              className="shrink-0 flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-medium"
+              className="shrink-0 flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-brand-600 text-white hover:bg-brand-700 font-medium"
             >
               <Plus size={14} /> <span className="hidden xs:inline sm:inline">Tambah PO</span><span className="xs:hidden sm:hidden">PO</span>
             </button>
@@ -615,8 +615,8 @@ export default function PreOrder() {
             <span className="text-[11px] text-slate-400 font-medium w-48">Manual (Update Hari H):</span>
             {KET_STATUS_OPTIONS.map(s => (
               <span key={s} className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold ${KET_STATUS_STYLE[s]}`}>
-                <Truck size={10} /> {s}
-                {s === 'Sudah Dibongkar' && <span className="text-[10px] opacity-60 ml-0.5">(via Bongkaran)</span>}
+                <Truck size={10} /> {statusLabel(s)}
+                {s === 'Sudah Dibongkar' && <span className="text-[10px] opacity-60 ml-0.5">(via Inspeksi Penerimaan)</span>}
               </span>
             ))}
           </div>
@@ -632,7 +632,7 @@ export default function PreOrder() {
           data={historyFiltered}
           loading={loading}
           emptyTitle={search || statusFilter !== 'all' ? 'Tidak ada history yang cocok' : 'Belum ada History PO (Sudah Tiba)'}
-          emptyDesc="PO yang berstatus Sudah Tiba akan masuk ke sini dan dilanjutkan ke menu Bongkaran"
+          emptyDesc="PO yang berstatus Sudah Tiba akan masuk ke sini dan dilanjutkan ke menu Inspeksi Penerimaan"
           onEdit={openEdit}
           onDelete={setDeleteTarget}
           isHistory={true}
@@ -653,7 +653,7 @@ export default function PreOrder() {
               value={form.tanggal_po}
               onChange={e => setForm(f => ({ ...f, tanggal_po: e.target.value }))}
               required
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400"
             />
             {form.tanggal_po && (
               <div className={`mt-2 inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-full ${
@@ -669,7 +669,7 @@ export default function PreOrder() {
             <div className="flex items-center justify-between">
               <label className="block text-sm text-slate-600 font-semibold">Daftar Barang</label>
               {!editTarget && (
-                <button type="button" onClick={addItem} className="text-xs font-medium text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
+                <button type="button" onClick={addItem} className="text-xs font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1">
                   <Plus size={14} /> Tambah Barang
                 </button>
               )}
@@ -695,20 +695,20 @@ export default function PreOrder() {
             <select
               value={form.keterangan_status}
               onChange={e => setForm(f => ({ ...f, keterangan_status: e.target.value }))}
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400">
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400">
               <option value="">— Belum ditentukan —</option>
               {KET_STATUS_OPTIONS.map(s => (
-                <option key={s} value={s}>{s}</option>
+                <option key={s} value={s}>{statusLabel(s)}</option>
               ))}
             </select>
             {form.keterangan_status === 'Sudah Tiba' && (
               <p className="mt-1.5 text-xs text-blue-600 font-medium flex items-center gap-1">
-                <CheckCircle size={11} /> Data akan otomatis masuk ke menu Bongkaran untuk direvisi
+                <CheckCircle size={11} /> Data akan otomatis masuk ke menu Inspeksi Penerimaan
               </p>
             )}
             {form.keterangan_status === 'Sudah Dibongkar' && (
               <p className="mt-1.5 text-xs text-emerald-600 font-medium flex items-center gap-1">
-                <CheckCircle size={11} /> Status ini diset otomatis setelah proses Bongkaran selesai
+                <CheckCircle size={11} /> Status ini diset otomatis setelah Inspeksi Penerimaan selesai
               </p>
             )}
           </div>
@@ -719,7 +719,7 @@ export default function PreOrder() {
               Batal
             </button>
             <button type="submit" disabled={saving}
-              className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-60">
+              className="flex-1 px-4 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-60">
               {saving ? 'Menyimpan…' : editTarget ? 'Perbarui' : 'Simpan PO'}
             </button>
           </div>
