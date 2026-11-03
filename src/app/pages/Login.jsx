@@ -93,7 +93,7 @@ export default function Login() {
           </motion.h1>
 
           <motion.p className="text-base xl:text-lg text-slate-300 mb-2 max-w-lg leading-relaxed" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55, duration: 0.5 }}>
-            Track aircraft and helicopter engines, components and spare parts, from purchase order and receiving inspection to stock and sales.
+            Track Aircraft Components and Components Spare Parts
           </motion.p>
 
           {isDesktop && (
